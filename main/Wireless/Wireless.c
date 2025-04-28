@@ -1,4 +1,7 @@
 #include "Wireless.h"
+#include "PCF85063.h"
+#include <time.h>
+#include "lwip/apps/sntp.h"
 
 static const char *TAG_WIFI = "WIFI";
 uint16_t BLE_NUM = 0;
@@ -13,6 +16,58 @@ static char wifi_ssid[33] = "";      // SSID com até 32 caracteres + null
 static char wifi_password[64] = "";   // Senha com até 63 caracteres + null
 static SemaphoreHandle_t wifi_mutex = NULL; // Mutex para proteger acesso
 static bool mutex_initialized = false; // Flag para verificar inicialização
+
+// Função para inicializar o cliente SNTP
+static void initialize_sntp(void) {
+    ESP_LOGI(TAG_WIFI, "Initializing SNTP");
+    sntp_setoperatingmode(SNTP_OPMODE_POLL);
+    sntp_setservername(0, "pool.ntp.org"); // Servidor NTP
+    sntp_setservername(0, "time.google.com"); // Servidor NTP
+    sntp_init();
+}
+
+// Função para obter a hora via NTP e atualizar o RTC
+static void update_rtc_from_ntp(void) {
+    // Aguarda até que a hora seja sincronizada
+    time_t now = 0;
+    struct tm timeinfo = {0};
+    int retry = 0;
+    const int retry_count = 10;
+
+    while (timeinfo.tm_year < (2025 - 1900) && ++retry < retry_count) {
+        ESP_LOGI(TAG_WIFI, "Waiting for system time to be set... (%d/%d)", retry, retry_count);
+        vTaskDelay(2000 / portTICK_PERIOD_MS);
+        time(&now);
+        localtime_r(&now, &timeinfo);
+    }
+
+    if (retry < retry_count) {
+        // Hora sincronizada com sucesso
+        ESP_LOGI(TAG_WIFI, "Time synchronized: %04d-%02d-%02d %02d:%02d:%02d",
+                 timeinfo.tm_year + 1900, timeinfo.tm_mon + 1, timeinfo.tm_mday,
+                 timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
+
+        // Preenche a estrutura datetime_t para o PCF85063
+        datetime_t ntp_time = {
+            .year = (uint16_t)(timeinfo.tm_year + 1900),
+            .month = (uint8_t)(timeinfo.tm_mon + 1),
+            .day = (uint8_t)timeinfo.tm_mday,
+            .dotw = (uint8_t)timeinfo.tm_wday,
+            .hour = (uint8_t)timeinfo.tm_hour,
+            .minute = (uint8_t)timeinfo.tm_min,
+            .second = (uint8_t)timeinfo.tm_sec
+        };
+
+        // Atualiza o RTC com a hora obtida
+        PCF85063_Set_All(ntp_time);
+        ESP_LOGI(TAG_WIFI, "RTC updated with NTP time");
+    } else {
+        ESP_LOGE(TAG_WIFI, "Failed to synchronize time with NTP");
+    }
+
+    // Para o cliente SNTP após a sincronização
+    sntp_stop();
+}
 
 void Wireless_Init(void)
 {
@@ -34,6 +89,10 @@ void Wireless_Init(void)
         ESP_LOGI("WIFI", "Mutex initialized successfully");
     }
 
+    // Configurar fuso horário
+    setenv("TZ", "BRT3", 1); // Brasília, UTC-3
+    tzset();
+    
     // Initialize NVS.
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
@@ -177,6 +236,11 @@ bool WIFI_Connect(const char *ssid, const char *password) {
     ret = esp_wifi_sta_get_ap_info(&ap_info);
     if (ret == ESP_OK) {
         ESP_LOGI("WIFI", "Connected to %s", wifi_ssid);
+
+        // Inicializa o cliente SNTP e atualiza o RTC
+        initialize_sntp();
+        update_rtc_from_ntp();
+
         return true;
     } else {
         ESP_LOGE("WIFI", "Failed to connect to %s: %s", wifi_ssid, esp_err_to_name(ret));

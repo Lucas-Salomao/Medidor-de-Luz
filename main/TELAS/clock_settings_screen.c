@@ -4,6 +4,7 @@
 #include "PCF85063.h"
 #include "esp_log.h"
 
+static const char *TAG_CLOCK_SETTINGS_SCREEN = "TAG_CLOCK_SETTINGS_SCREEN";
 
 // Componentes da UI
 static lv_obj_t *hour_roller;
@@ -15,12 +16,12 @@ static lv_obj_t *save_btn;
 static lv_obj_t *back_btn;
 
 static void back_btn_event_handler(lv_event_t *e) {
-    ESP_LOGI(TAG, "Botão voltar clicado na tela de configuração do relógio");
+    ESP_LOGI(TAG_CLOCK_SETTINGS_SCREEN, "Botão voltar clicado na tela de configuração do relógio");
     lv_scr_load_anim(config_screen, LV_SCR_LOAD_ANIM_FADE_ON, 500, 0, false);
 }
 
 static void save_btn_event_handler(lv_event_t *e) {
-    ESP_LOGI(TAG, "Botão salvar clicado na tela de configuração do relógio");
+    ESP_LOGI(TAG_CLOCK_SETTINGS_SCREEN, "Botão salvar clicado na tela de configuração do relógio");
     
     // Obter os valores selecionados
     char buf[16];
@@ -41,7 +42,7 @@ static void save_btn_event_handler(lv_event_t *e) {
     lv_roller_get_selected_str(year_roller, buf, sizeof(buf));
     year = atoi(buf);
     
-    ESP_LOGI(TAG, "Configurando RTC: %02d/%02d/%04d %02d:%02d", day, month, year, hour, minute);
+    ESP_LOGI(TAG_CLOCK_SETTINGS_SCREEN, "Configurando RTC: %02d/%02d/%04d %02d:%02d", day, month, year, hour, minute);
     
     // Atualizar o RTC
     datetime_t new_datetime;
@@ -75,7 +76,7 @@ static void save_btn_event_handler(lv_event_t *e) {
 
 // Função para carregar a tela de configurações do relógio
 void clock_settings_screen_load(void) {
-    ESP_LOGI(TAG, "Carregando tela de configurações do relógio");
+    ESP_LOGI(TAG_CLOCK_SETTINGS_SCREEN, "Carregando tela de configurações do relógio");
     
     // Cria a tela de configurações do relógio
     lv_obj_t *scr = lv_obj_create(NULL);

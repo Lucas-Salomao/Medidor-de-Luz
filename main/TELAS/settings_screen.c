@@ -5,6 +5,8 @@
 #include "Screens.h" // Inclui o cabeçalho da tela de configurações
 #include "esp_log.h"
 
+
+static const char *TAG_SETTINGS_SCREEN = "TAG_SETTINGS_SCREEN";
 static lv_style_t fa_icon_style;
 #define ICON_CLOCK "\xEF\x80\x97"
 
@@ -16,7 +18,7 @@ void make_styles(void) {
 
 // Callback para o botão Relógio
 void btn_clock_cb(lv_event_t *e) {
-    ESP_LOGI(TAG, "Botão de configuração do relógio clicado");
+    ESP_LOGI(TAG_SETTINGS_SCREEN, "Botão de configuração do relógio clicado");
     clock_settings_screen_load(); // Carrega a tela de configurações do relógio
 }
 
@@ -27,12 +29,12 @@ void btn_wifi_cb(lv_event_t *e) {
 
 
 void home_btn_event_handler(lv_event_t *e) {
-    // ESP_LOGI(TAG, "Clique no botão de configuração");
+    ESP_LOGI(TAG_SETTINGS_SCREEN, "Clique no botão de home");
     if (main_screen == NULL) {
-        ESP_LOGE(TAG, "main_screen não inicializado");
+        ESP_LOGE(TAG_SETTINGS_SCREEN, "main_screen não inicializado");
         return;
     }
-    // ESP_LOGI(TAG, "Tentando carregar a tela de configuração");
+    ESP_LOGI(TAG_SETTINGS_SCREEN, "Tentando carregar a tela principal");
     // lv_disp_load_scr(main_screen);
     lv_scr_load_anim(main_screen, LV_SCR_LOAD_ANIM_FADE_ON, 500, 0, false);
 }
