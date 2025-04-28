@@ -1,16 +1,21 @@
+#pragma once
+
 #ifndef SCREENS_H
 #define SCREENS_H
 
 #include "lvgl.h"
 
+// Objetos globais
+extern const char *TAG;
+extern lv_obj_t *splash_screen;
+extern lv_obj_t *main_screen;
+extern lv_obj_t *config_screen;
+extern lv_obj_t *clock_config_screen;
+extern lv_obj_t *wifi_config_screen;
+extern lv_timer_t *splash_timer;
+extern lv_obj_t *lux_label;
+
 void setup_ui(void);
-void create_splash_screen(lv_obj_t *parent);
-void create_main_screen(lv_obj_t *parent);
-void create_config_screen(lv_obj_t *parent);
 void splash_timer_callback(lv_timer_t *timer);
-void update_lux_value(float lux); // Nova função para atualizar o valor na tela
-void sensor_task(void *arg);
-void config_btn_event_handler(lv_event_t *e);
-void return_btn_event_handler(lv_event_t *e);
 
 #endif

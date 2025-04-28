@@ -7,7 +7,20 @@
 #include "BAT_Driver.h"
 #include "PWR_Key.h"
 #include "PCM5101.h"
+#include "VEML7700.h"
 #include "Screens.h"
+#include "fluorimeter_screen.h"
+
+
+void sensor_task(void *arg) {
+    while (1) {
+        float lux;
+        if (VEML7700_Read_Lux(&lux) == ESP_OK) {
+            update_lux_value(lux);
+        }
+        vTaskDelay(pdMS_TO_TICKS(500));
+    }
+}
 
 void Driver_Loop(void *parameter)
 {
@@ -29,7 +42,8 @@ void Driver_Init(void)
     I2C_Init();
     PCF85063_Init();
     QMI8658_Init();
-    Flash_Searching();
+    // Flash_Searching();
+    VEML7700_Init(I2C_NUM_0);
     xTaskCreatePinnedToCore(
         Driver_Loop, 
         "Other Driver task",
@@ -42,7 +56,6 @@ void Driver_Init(void)
 void app_main(void)
 {
     Driver_Init();
-
     SD_Init();
     LCD_Init();
     Audio_Init();
@@ -54,20 +67,13 @@ void app_main(void)
     // Cria a tarefa para leitura do sensor
     xTaskCreatePinnedToCore(sensor_task, "Sensor Task", 4096, NULL, 2, NULL, 0);
 
-/********************* Demo *********************/
-    // Lvgl_Example1();
-    // lv_demo_widgets();
-    // lv_demo_keypad_encoder();
-    // lv_demo_benchmark();
-    // lv_demo_stress();
-    // lv_demo_music();
-
     while (1) {
         // raise the task priority of LVGL and/or reduce the handler period can improve the performance
         vTaskDelay(pdMS_TO_TICKS(10));
         // The task running lv_timer_handler should have lower priority than that running `lv_tick_inc`
         lv_timer_handler();
     }
+
 }
 
 

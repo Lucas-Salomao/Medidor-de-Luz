@@ -1,121 +1,10 @@
 #include "Wireless.h"
 
-#include "esp_sntp.h"
-#include "time.h"
-bool is_wifi_connected = false;
-
 uint16_t BLE_NUM = 0;
 uint16_t WIFI_NUM = 0;
 bool Scan_finish = 0;
-
 bool WiFi_Scan_Finish = 0;
 bool BLE_Scan_Finish = 0;
-
-void time_sync_notification_cb(struct timeval *tv)
-{
-    time_t now;
-    struct tm timeinfo;
-    char strftime_buf[64];
-    
-    time(&now);
-    localtime_r(&now, &timeinfo);
-    
-    // Formatando a data e hora
-    strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
-    ESP_LOGI("NTP", "Sincronização concluída: %s", strftime_buf);
-}
-
-void sync_time_with_ntp(void)
-{
-    ESP_LOGI("NTP", "Iniciando sincronização de tempo com NTP...");
-    
-    // Configurar o fuso horário para horário de Brasília (GMT-3)
-    setenv("TZ", "BRT3", 1);
-    tzset();
-    
-    // Configura o SNTP
-    sntp_setoperatingmode(SNTP_OPMODE_POLL);
-    sntp_setservername(0, "pool.ntp.org");
-    sntp_set_time_sync_notification_cb(time_sync_notification_cb);
-    sntp_init();
-    
-    // Aguardar até que o tempo seja sincronizado
-    time_t now = 0;
-    struct tm timeinfo = { 0 };
-    int retry = 0;
-    const int retry_count = 15;
-    
-    while (timeinfo.tm_year < (2020 - 1900) && ++retry < retry_count) {
-        ESP_LOGI("NTP", "Aguardando sincronização de tempo... (%d/%d)", retry, retry_count);
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
-        time(&now);
-        localtime_r(&now, &timeinfo);
-    }
-    
-    if (timeinfo.tm_year < (2020 - 1900)) {
-        ESP_LOGE("NTP", "Falha na sincronização NTP.");
-    } else {
-        char strftime_buf[64];
-        strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
-        ESP_LOGI("NTP", "Horário atual: %s", strftime_buf);
-    }
-}
-
-// Evento para lidar com a conexão WiFi
-static esp_err_t wifi_event_handler(void *arg, esp_event_base_t event_base,
-                               int32_t event_id, void *event_data)
-{
-    if (event_base == WIFI_EVENT) {
-        if (event_id == WIFI_EVENT_STA_START) {
-            ESP_LOGI("WiFi", "Conectando ao WiFi...");
-            esp_wifi_connect();
-        } else if (event_id == WIFI_EVENT_STA_DISCONNECTED) {
-            ESP_LOGI("WiFi", "Desconectado do WiFi. Tentando reconectar...");
-            is_wifi_connected = false;
-            esp_wifi_connect();
-        }
-    } else if (event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP) {
-        ip_event_got_ip_t* event = (ip_event_got_ip_t*) event_data;
-        ESP_LOGI("WiFi", "Conectado com IP:" IPSTR, IP2STR(&event->ip_info.ip));
-        is_wifi_connected = true;
-        
-        // Sincronizar o tempo assim que a conexão for estabelecida
-        sync_time_with_ntp();
-    }
-    return ESP_OK;
-}
-
-void WIFI_Connect(const char *ssid, const char *password)
-{
-    ESP_LOGI("WiFi", "Iniciando conexão com %s", ssid);
-    
-    // Registrar os callbacks para eventos WiFi
-    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_event_handler, NULL));
-    ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &wifi_event_handler, NULL));
-    
-    // Configurar WiFi
-    wifi_config_t wifi_config = {
-        .sta = {
-            .pmf_cfg = {
-                .capable = true,
-                .required = false
-            },
-        },
-    };
-    
-    strncpy((char *)wifi_config.sta.ssid, ssid, sizeof(wifi_config.sta.ssid));
-    strncpy((char *)wifi_config.sta.password, password, sizeof(wifi_config.sta.password));
-    
-    // Configurar modo station
-    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
-    ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
-    
-    // Iniciar WiFi
-    ESP_ERROR_CHECK(esp_wifi_start());
-    
-    ESP_LOGI("WiFi", "Configuração WiFi concluída, aguardando conexão...");
-}
-
 
 void Wireless_Init(void)
 {
@@ -152,35 +41,14 @@ void WIFI_Init(void *arg)
     esp_event_loop_create_default();                                      
     esp_netif_create_default_wifi_sta();                                 
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();                 
-    esp_wifi_init(&cfg);
+    esp_wifi_init(&cfg);                                      
+    esp_wifi_set_mode(WIFI_MODE_STA);              
+    esp_wifi_start();                            
+
+    WIFI_NUM = WIFI_Scan();
+    printf("WIFI:%d\r\n",WIFI_NUM);
     
-    // Conectar à rede WiFi especificada
-    WIFI_Connect("lucas-2G", "npmsenha");
-    
-    // A função WIFI_Scan pode ser chamada se necessário
-    // WIFI_NUM = WIFI_Scan();
-    // printf("WIFI:%d\r\n",WIFI_NUM);
-    
-    // A tarefa não deve ser excluída para manter a conexão WiFi ativa
-    while(1) {
-        // Você pode adicionar verificações periódicas do estado do WiFi aqui
-        vTaskDelay(pdMS_TO_TICKS(10000));  // Verifica a cada 10 segundos
-        
-        if (is_wifi_connected) {
-            // Exibir hora atual periodicamente
-            time_t now;
-            struct tm timeinfo;
-            char strftime_buf[64];
-            
-            time(&now);
-            localtime_r(&now, &timeinfo);
-            strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
-            ESP_LOGI("WiFi", "Horário atual: %s", strftime_buf);
-        }
-    }
-    
-    // Esta linha nunca será executada
-    // vTaskDelete(NULL);
+    vTaskDelete(NULL);
 }
 uint16_t WIFI_Scan(void)
 {

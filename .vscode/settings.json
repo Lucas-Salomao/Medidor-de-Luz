@@ -52,7 +52,20 @@
     "esp_attr.h": "c",
     "esp_wifi.h": "c",
     "string.h": "c",
-    "esp_event.h": "c"
+    "esp_event.h": "c",
+    "lv_conf_internal.h": "c",
+    "lv_conf_kconfig.h": "c",
+    "lv_font.h": "c",
+    "wireless.h": "c",
+    "esp_bt.h": "c",
+    "esp_bt_main.h": "c",
+    "settings_screen.h": "c",
+    "cstdio": "c",
+    "stdint.h": "c",
+    "stdarg.h": "c",
+    "clock_settings_screen.h": "c",
+    "fluximeter_screen.h": "c",
+    "font_awesome_icons.h": "c"
   },
   "idf.adapterTargetName": "esp32s3",
   "idf.openOcdConfigs": [

@@ -11,7 +11,7 @@
 ---------------------------------------------------------------*/
 //ADC1 Channels
 #define EXAMPLE_ADC1_CHAN       ADC_CHANNEL_7              // GPIO8
-#define EXAMPLE_ADC_ATTEN       ADC_ATTEN_DB_11             // ADC_ATTEN_DB_12
+#define EXAMPLE_ADC_ATTEN       ADC_ATTEN_DB_11             // ADC_ATTEN_DB_11
 
 #define Measurement_offset 0.994500  
 

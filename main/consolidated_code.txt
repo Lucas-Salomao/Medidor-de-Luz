@@ -1,0 +1,457 @@
+########## Path: main.c ##########
+#include "ST7789.h"
+#include "PCF85063.h"
+#include "QMI8658.h"
+#include "SD_MMC.h"
+#include "Wireless.h"
+#include "LVGL_Example.h"
+#include "BAT_Driver.h"
+#include "PWR_Key.h"
+#include "PCM5101.h"
+#include "VEML7700.h"
+#include "Screens.h"
+#include "fluximeter_screen.h"
+
+
+void sensor_task(void *arg) {
+    while (1) {
+        float lux;
+        if (VEML7700_Read_Lux(&lux) == ESP_OK) {
+            update_lux_value(lux);
+        }
+        vTaskDelay(pdMS_TO_TICKS(500));
+    }
+}
+
+void Driver_Loop(void *parameter)
+{
+    Wireless_Init();
+    while(1)
+    {
+        QMI8658_Loop();
+        PCF85063_Loop();
+        BAT_Get_Volts();
+        PWR_Loop();
+        vTaskDelay(pdMS_TO_TICKS(100));
+    }
+    vTaskDelete(NULL);
+}
+void Driver_Init(void)
+{
+    PWR_Init();
+    BAT_Init();
+    I2C_Init();
+    PCF85063_Init();
+    QMI8658_Init();
+    // Flash_Searching();
+    VEML7700_Init(I2C_NUM_0);
+    xTaskCreatePinnedToCore(
+        Driver_Loop, 
+        "Other Driver task",
+        4096, 
+        NULL, 
+        3, 
+        NULL, 
+        0);
+}
+void app_main(void)
+{
+    Driver_Init();
+    SD_Init();
+    LCD_Init();
+    Audio_Init();
+    // Play_Music("/sdcard","AAA.mp3");
+    LVGL_Init();   // returns the screen object
+
+    setup_ui();
+
+    // Cria a tarefa para leitura do sensor
+    xTaskCreatePinnedToCore(sensor_task, "Sensor Task", 4096, NULL, 2, NULL, 0);
+
+    while (1) {
+        // raise the task priority of LVGL and/or reduce the handler period can improve the performance
+        vTaskDelay(pdMS_TO_TICKS(10));
+        // The task running lv_timer_handler should have lower priority than that running `lv_tick_inc`
+        lv_timer_handler();
+    }
+
+}
+
+########## END FILE: main.c ##########
+
+
+########## Path: TELAS/clock_settings_screen.c ##########
+#include "lvgl.h"
+
+// Função para carregar a tela de configurações do relógio
+void clock_settings_screen_load(void) {
+    // Cria a tela de configurações do relógio
+    lv_obj_t *scr = lv_obj_create(NULL);
+    lv_obj_set_style_bg_color(scr, lv_color_white(), LV_PART_MAIN);
+    lv_scr_load(scr);
+
+    // Adiciona um texto placeholder
+    lv_obj_t *label = lv_label_create(scr);
+    lv_label_set_text(label, "Clock Settings");
+    lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
+
+    // Estiliza o texto
+    static lv_style_t style_label;
+    lv_style_init(&style_label);
+    lv_style_set_text_font(&style_label, &lv_font_montserrat_16);
+    lv_style_set_text_color(&style_label, lv_color_black());
+    lv_obj_add_style(label, &style_label, 0);
+}
+########## END FILE: TELAS/clock_settings_screen.c ##########
+
+########## Path: TELAS/clock_settings_screen.h ##########
+#ifndef CLOCK_SETTINGS_SCREEN_H
+#define CLOCK_SETTINGS_SCREEN_H
+
+void clock_settings_screen_load(void);
+
+#endif
+########## END FILE: TELAS/clock_settings_screen.h ##########
+
+########## Path: TELAS/fluximeter_screen.c ##########
+#include <stdio.h>
+#include "lvgl.h"
+#include "Screens.h" // Inclui o cabeçalho da tela de configurações
+
+void update_lux_value(float lux) {
+    char buf[32];
+    snprintf(buf, sizeof(buf), "Lux: %.2f", lux);
+    lv_label_set_text(lux_label, buf);
+}
+
+void config_btn_event_handler(lv_event_t *e) {
+    lv_scr_load_anim(config_screen, LV_SCR_LOAD_ANIM_FADE_ON, 500, 0, false);
+}
+
+// Função para carregar a tela do fluxímetro
+void create_main_screen(lv_obj_t *parent) {
+    lv_obj_t *title = lv_label_create(parent);
+    lv_label_set_text(title, "FLUORIMETER");
+    lv_obj_set_style_text_font(title, &lv_font_montserrat_16, 0);
+    lv_obj_set_style_text_color(title, lv_color_black(), LV_PART_MAIN);
+    lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 10);
+
+    lux_label = lv_label_create(parent);
+    lv_label_set_text(lux_label, "Lux: --");
+    lv_obj_set_style_text_font(lux_label, &lv_font_montserrat_16, 0);
+    lv_obj_set_style_text_color(lux_label, lv_color_black(), LV_PART_MAIN);
+    lv_obj_align(lux_label, LV_ALIGN_CENTER, 0, 0);
+
+    lv_obj_t *config_btn = lv_btn_create(parent);
+    lv_obj_set_size(config_btn, 40, 40);
+    lv_obj_align(config_btn, LV_ALIGN_TOP_RIGHT, -5, 40);
+    lv_obj_add_event_cb(config_btn, config_btn_event_handler, LV_EVENT_CLICKED, NULL);
+    lv_obj_t *gear_icon = lv_label_create(config_btn);
+    lv_label_set_text(gear_icon, LV_SYMBOL_SETTINGS);
+    lv_obj_center(gear_icon);
+}
+
+########## END FILE: TELAS/fluximeter_screen.c ##########
+
+########## Path: TELAS/fluximeter_screen.h ##########
+#ifndef FLUXIMETER_SCREEN_H
+#define FLUXIMETER_SCREEN_H
+
+void update_lux_value(float lux);
+void config_btn_event_handler(lv_event_t *e);
+void create_main_screen(lv_obj_t *parent);
+
+#endif
+########## END FILE: TELAS/fluximeter_screen.h ##########
+
+########## Path: TELAS/Screens.c ##########
+#include "Screens.h"
+#include "splash_screen.h"
+#include "settings_screen.h"
+#include "fluximeter_screen.h"
+
+#include "esp_log.h"
+#include "esp_wifi.h"
+#include "nvs_flash.h" 
+#include "esp_netif.h"
+#include "esp_event.h"
+#include "esp_sntp.h"
+#include "lwip/apps/sntp.h"
+
+
+void setup_ui(void) {
+
+    splash_screen = lv_obj_create(NULL);
+    main_screen = lv_obj_create(NULL);
+    config_screen = lv_obj_create(NULL);
+    
+    lv_obj_set_style_bg_color(splash_screen, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(main_screen, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(config_screen, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
+    
+    create_splash_screen(splash_screen);
+    create_main_screen(main_screen);
+    create_config_screen(config_screen);
+    
+    lv_scr_load(splash_screen);
+    
+    splash_timer = lv_timer_create(splash_timer_callback, 3000, NULL);
+    lv_timer_set_repeat_count(splash_timer, 1);
+}
+
+void splash_timer_callback(lv_timer_t *timer) {
+    lv_scr_load_anim(main_screen, LV_SCR_LOAD_ANIM_FADE_ON, 500, 0, false);
+}
+########## END FILE: TELAS/Screens.c ##########
+
+########## Path: TELAS/Screens.h ##########
+#ifndef SCREENS_H
+#define SCREENS_H
+
+#include "lvgl.h"
+
+static const char *TAG = "Screens";
+
+// Objetos globais
+static lv_obj_t *splash_screen = NULL;
+static lv_obj_t *main_screen = NULL;
+static lv_obj_t *config_screen = NULL;
+static lv_timer_t *splash_timer = NULL;
+static lv_obj_t *lux_label = NULL;
+
+void setup_ui(void);
+void splash_timer_callback(lv_timer_t *timer);
+
+#endif
+########## END FILE: TELAS/Screens.h ##########
+
+########## Path: TELAS/settings_screen.c ##########
+#include "lvgl.h"
+#include "clock_settings_screen.h"
+#include "wifi_settings_screen.h"
+#include "font_awesome_icons.h"
+#include "Screens.h" // Inclui o cabeçalho da tela de configurações
+
+static lv_style_t fa_icon_style;
+#define ICON_CLOCK "\xEF\x80\x97"
+
+void make_styles(void){
+    lv_style_init(&fa_icon_style);
+    lv_style_set_text_font(&fa_icon_style, &font_awesome_icons);
+    lv_style_set_text_color(&fa_icon_style, lv_color_white());
+}
+
+// Callback para o botão Relógio
+void btn_clock_cb(lv_event_t *e) {
+    // clock_settings_screen_load(); // Carrega a tela de configurações do relógio
+}
+
+// Callback para o botão Wi-Fi
+void btn_wifi_cb(lv_event_t *e) {
+    // wifi_settings_screen_load(); // Carrega a tela de configurações do Wi-Fi
+}
+
+// Função para carregar a tela de configurações
+void create_config_screen(lv_obj_t *parent) {
+    make_styles();
+    lv_obj_set_style_bg_color(parent, lv_color_white(), LV_PART_MAIN);
+
+    // Cria o botão "Relógio"
+    lv_obj_t *btn_clock = lv_btn_create(parent);
+    lv_obj_set_size(btn_clock, 120, 50);
+    lv_obj_align(btn_clock, LV_ALIGN_CENTER, 0, -30); // Acima do centro
+
+    lv_obj_t *label_clock = lv_label_create(btn_clock);
+    lv_label_set_text(label_clock, "Clock Settings");
+    lv_obj_center(label_clock);
+    lv_obj_t *clock_icon = lv_label_create(btn_clock);
+    lv_label_set_text(clock_icon, ICON_CLOCK);
+
+    // Cria o botão "Wi-Fi"
+    lv_obj_t *btn_wifi = lv_btn_create(parent);
+    lv_obj_set_size(btn_wifi, 120, 50);
+    lv_obj_align(btn_wifi, LV_ALIGN_CENTER, 0, 30); // Abaixo do centro
+
+    lv_obj_t *label_wifi = lv_label_create(btn_wifi);
+    lv_label_set_text(label_wifi, "Wi-Fi");
+    lv_obj_center(label_wifi);
+
+    // // Estiliza os botões
+    // static lv_style_t style_btn;
+    // lv_style_init(&style_btn);
+    // lv_style_set_bg_color(&style_btn, lv_color_make(0xE0, 0xE0, 0xE0)); // Cinza claro
+    // lv_style_set_border_width(&style_btn, 1);
+    // lv_style_set_border_color(&style_btn, lv_color_black());
+    // lv_style_set_text_font(&style_btn, &lv_font_montserrat_16);
+    // lv_obj_add_style(btn_clock, &style_btn, 0);
+    // lv_obj_add_style(btn_wifi, &style_btn, 0);
+
+    lv_obj_add_event_cb(btn_clock, btn_clock_cb, LV_EVENT_CLICKED, NULL);
+
+    lv_obj_add_event_cb(btn_wifi, btn_wifi_cb, LV_EVENT_CLICKED, NULL);
+}
+########## END FILE: TELAS/settings_screen.c ##########
+
+########## Path: TELAS/settings_screen.h ##########
+#ifndef SETTINGS_SCREEN_H
+#define SETTINGS_SCREEN_H
+
+void create_config_screen(lv_obj_t *parent);
+
+#endif
+########## END FILE: TELAS/settings_screen.h ##########
+
+########## Path: TELAS/splash_screen.c ##########
+#include "lvgl.h"
+#include "fluximeter_screen.h" // Para chamar a tela do fluxímetro
+#include "logo.h" // Para carregar o logo
+
+// Declaração da imagem do logo (definida em logo.c)
+// extern const lv_img_dsc_t logo_scintilum;
+
+// Função de callback para animar a barra de progresso
+static void bar_anim_cb(void *var, int32_t value) {
+    lv_bar_set_value((lv_obj_t *)var, value, LV_ANIM_ON);
+}
+
+// Função para carregar a tela de abertura
+void create_splash_screen(lv_obj_t *parent) {
+    lv_obj_set_style_bg_color(parent, lv_color_white(), LV_PART_MAIN);
+
+    // Adiciona o logo centralizado
+    lv_obj_t *img = lv_img_create(parent);
+    lv_img_set_src(img, &logo_scintilum);
+    lv_obj_align(img, LV_ALIGN_CENTER, 0, -20); // Levemente acima do centro
+
+    // Cria a barra de progresso
+    lv_obj_t *bar = lv_bar_create(parent);
+    lv_obj_set_size(bar, 200, 20);
+    lv_obj_align(bar, LV_ALIGN_BOTTOM_MID, 0, -20); // Abaixo do logo
+    lv_bar_set_range(bar, 0, 100);
+    lv_bar_set_value(bar, 0, LV_ANIM_OFF);
+
+    // Estiliza a barra de progresso
+    static lv_style_t style_bar;
+    lv_style_init(&style_bar);
+    lv_style_set_bg_color(&style_bar, lv_color_make(0xE0, 0xE0, 0xE0)); // Fundo cinza claro
+    lv_obj_add_style(bar, &style_bar, LV_PART_MAIN);
+
+    static lv_style_t style_indic;
+    lv_style_init(&style_indic);
+    lv_style_set_bg_color(&style_indic, lv_color_make(0x00, 0x80, 0xFF)); // Indicador azul
+    lv_obj_add_style(bar, &style_indic, LV_PART_INDICATOR);
+
+    // Cria a animação da barra (0 a 100 em 3 segundos)
+    lv_anim_t anim;
+    lv_anim_init(&anim);
+    lv_anim_set_var(&anim, bar);
+    lv_anim_set_values(&anim, 0, 100);
+    lv_anim_set_time(&anim, 3000); // 3 segundos
+    lv_anim_set_exec_cb(&anim, bar_anim_cb);
+    lv_anim_set_path_cb(&anim, lv_anim_path_linear); // Progressão linear
+    lv_anim_start(&anim);
+}
+########## END FILE: TELAS/splash_screen.c ##########
+
+########## Path: TELAS/splash_screen.h ##########
+#ifndef SPLASH_SCREEN_H
+#define SPLASH_SCREEN_H
+
+void create_splash_screen(lv_obj_t *parent);
+
+#endif
+########## END FILE: TELAS/splash_screen.h ##########
+
+########## Path: TELAS/wifi_settings_screen.c ##########
+#include "lvgl.h"
+
+// Função para carregar a tela de configurações do Wi-Fi
+void wifi_settings_screen_load(void) {
+    // Cria a tela de configurações do Wi-Fi
+    lv_obj_t *scr = lv_obj_create(NULL);
+    lv_obj_set_style_bg_color(scr, lv_color_white(), LV_PART_MAIN);
+    lv_scr_load(scr);
+
+    // Adiciona um texto placeholder
+    lv_obj_t *label = lv_label_create(scr);
+    lv_label_set_text(label, "Wi-Fi Settings");
+    lv_obj_align(label, LV_ALIGN_CENTER, 0, 0);
+
+    // Estiliza o texto
+    static lv_style_t style_label;
+    lv_style_init(&style_label);
+    lv_style_set_text_font(&style_label, &lv_font_montserrat_16);
+    lv_style_set_text_color(&style_label, lv_color_black());
+    lv_obj_add_style(label, &style_label, 0);
+}
+########## END FILE: TELAS/wifi_settings_screen.c ##########
+
+########## Path: TELAS/wifi_settings_screen.h ##########
+#ifndef WIFI_SETTINGS_SCREEN_H
+#define WIFI_SETTINGS_SCREEN_H
+
+void wifi_settings_screen_load(void);
+
+#endif
+########## END FILE: TELAS/wifi_settings_screen.h ##########
+
+########## Path: VEML7700/VEML7700.c ##########
+#include "VEML7700.h"
+#include "esp_log.h"
+
+static const char *TAG = "VEML7700";
+
+static esp_err_t i2c_write_reg(i2c_port_t i2c_port, uint8_t reg, uint16_t data) {
+    uint8_t write_buf[3] = {reg, (uint8_t)(data & 0xFF), (uint8_t)(data >> 8)};
+    return i2c_master_write_to_device(i2c_port, VEML7700_I2C_ADDR, write_buf, sizeof(write_buf), 1000 / portTICK_PERIOD_MS);
+}
+
+static esp_err_t i2c_read_reg(i2c_port_t i2c_port, uint8_t reg, uint16_t *data) {
+    uint8_t read_buf[2];
+    esp_err_t ret = i2c_master_write_read_device(i2c_port, VEML7700_I2C_ADDR, &reg, 1, read_buf, 2, 1000 / portTICK_PERIOD_MS);
+    if (ret == ESP_OK) {
+        *data = (read_buf[1] << 8) | read_buf[0];
+    }
+    return ret;
+}
+
+esp_err_t VEML7700_Init(i2c_port_t i2c_port) {
+    // Configuração padrão: ganho 1x, tempo de integração 100ms, sem shutdown
+    uint16_t config = 0x0000; // Ganho 1x (bits 12:11 = 00), IT 100ms (bits 9:6 = 0000)
+    esp_err_t ret = i2c_write_reg(i2c_port, VEML7700_REG_ALS_CONF, config);
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Falha ao inicializar VEML7700");
+    }
+    return ret;
+}
+
+esp_err_t VEML7700_Read_Lux(float *lux) {
+    uint16_t raw_data;
+    esp_err_t ret = i2c_read_reg(I2C_NUM_0, VEML7700_REG_ALS_DATA, &raw_data);
+    if (ret == ESP_OK) {
+        // Resolução padrão para ganho 1x e IT 100ms é 0.0576 lux por contagem
+        *lux = raw_data * 0.0576;
+    } else {
+        ESP_LOGE(TAG, "Falha ao ler dados do VEML7700");
+    }
+    return ret;
+}
+########## END FILE: VEML7700/VEML7700.c ##########
+
+########## Path: VEML7700/VEML7700.h ##########
+#ifndef VEML7700_H
+#define VEML7700_H
+
+#include "driver/i2c.h"
+
+#define VEML7700_I2C_ADDR 0x10  // Endereço I2C fixo do VEML7700
+
+// Registradores do VEML7700
+#define VEML7700_REG_ALS_CONF 0x00  // Configuração do ALS
+#define VEML7700_REG_ALS_DATA 0x04  // Dados de luz ambiente
+
+esp_err_t VEML7700_Init(i2c_port_t i2c_port);
+esp_err_t VEML7700_Read_Lux(float *lux);
+
+#endif
+########## END FILE: VEML7700/VEML7700.h ##########
