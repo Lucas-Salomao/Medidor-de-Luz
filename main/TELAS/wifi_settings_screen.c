@@ -8,17 +8,24 @@ static lv_obj_t *wifi_screen = NULL;
 static lv_obj_t *ssid_dropdown = NULL;
 static lv_obj_t *password_input = NULL;
 static lv_obj_t *status_label = NULL;
+static lv_obj_t *keyboard = NULL; // Objeto do teclado
 
 // Forward declarations
 static void back_btn_event_handler(lv_event_t *e);
 static void connect_btn_event_handler(lv_event_t *e);
 static void refresh_btn_event_handler(lv_event_t *e);
 static void populate_wifi_dropdown(void *data);
+static void password_input_event_handler(lv_event_t *e);
+static void screen_click_event_handler(lv_event_t *e);
+static void keyboard_close_handler(lv_event_t *e);  
 
 void wifi_settings_screen_init(void) {
     if (wifi_screen == NULL) {
         wifi_screen = lv_obj_create(NULL);
         lv_obj_set_style_bg_color(wifi_screen, lv_color_white(), LV_PART_MAIN);
+
+        // Adiciona evento de clique na tela para fechar o teclado
+        lv_obj_add_event_cb(wifi_screen, screen_click_event_handler, LV_EVENT_CLICKED, NULL);
         
         // Title
         lv_obj_t *title = lv_label_create(wifi_screen);
@@ -64,10 +71,11 @@ void wifi_settings_screen_init(void) {
         
         // Password Input
         password_input = lv_textarea_create(wifi_screen);
-        lv_textarea_set_password_mode(password_input, true);
+        lv_textarea_set_password_mode(password_input, false);
         lv_textarea_set_one_line(password_input, true);
         lv_obj_set_size(password_input, 200, 40);
         lv_obj_align(password_input, LV_ALIGN_TOP_LEFT, 20, 155);
+        lv_obj_add_event_cb(password_input, password_input_event_handler, LV_EVENT_CLICKED, NULL);
         
         // Connect Button
         lv_obj_t *connect_btn = lv_btn_create(wifi_screen);
@@ -84,6 +92,16 @@ void wifi_settings_screen_init(void) {
         lv_label_set_text(status_label, "");
         lv_obj_set_style_text_color(status_label, lv_color_black(), LV_PART_MAIN);
         lv_obj_align(status_label, LV_ALIGN_BOTTOM_MID, 0, -10);
+
+        // Inicializa o teclado
+        keyboard = lv_keyboard_create(wifi_screen);
+        lv_obj_set_size(keyboard, 240, 120); // Ajusta para 240px de largura e 120px de altura
+        lv_obj_align(keyboard, LV_ALIGN_BOTTOM_MID, 0, 0); // Posiciona na parte inferior
+        lv_keyboard_set_textarea(keyboard, password_input); // Vincula ao password_input
+        lv_obj_add_flag(keyboard, LV_OBJ_FLAG_HIDDEN); // Esconde o teclado inicialmente
+        lv_keyboard_set_mode(keyboard, LV_KEYBOARD_MODE_TEXT_LOWER); // Modo de texto
+        // Adiciona evento para fechar o teclado ao pressionar "OK"
+        lv_obj_add_event_cb(keyboard, keyboard_close_handler, LV_EVENT_READY, NULL);
         
         // Populate dropdown with dummy values initially
         lv_dropdown_set_options(ssid_dropdown, "Scanning...");
@@ -97,8 +115,6 @@ void wifi_settings_screen_load(void) {
     
     lv_scr_load_anim(wifi_screen, LV_SCR_LOAD_ANIM_FADE_ON, 500, 0, false);
     
-    // Refresh Wi-Fi networks when screen is loaded
-    refresh_btn_event_handler(NULL);
 }
 
 static void back_btn_event_handler(lv_event_t *e) {
@@ -207,4 +223,30 @@ static void populate_wifi_dropdown(void *data) {
     free(buffer);
 
     ESP_LOGI(TAG, "Populated dropdown with %d networks", WIFI_NUM);
+}
+
+static void password_input_event_handler(lv_event_t *e) {
+    ESP_LOGI(TAG, "Password input clicked");
+    // Mostra o teclado
+    if (keyboard != NULL) {
+        lv_obj_clear_flag(keyboard, LV_OBJ_FLAG_HIDDEN);
+        lv_keyboard_set_textarea(keyboard, password_input);
+    }
+}
+
+static void screen_click_event_handler(lv_event_t *e) {
+    // Fecha o teclado se o clique for fora do password_input
+    lv_obj_t *target = lv_event_get_target(e);
+    if (target != password_input && keyboard != NULL && !lv_obj_has_flag(keyboard, LV_OBJ_FLAG_HIDDEN)) {
+        lv_obj_add_flag(keyboard, LV_OBJ_FLAG_HIDDEN);
+        ESP_LOGI(TAG, "Keyboard hidden due to screen click");
+    }
+}
+
+static void keyboard_close_handler(lv_event_t *e) {
+    // Fecha o teclado quando o botão "OK" for pressionado
+    if (keyboard != NULL) {
+        lv_obj_add_flag(keyboard, LV_OBJ_FLAG_HIDDEN);
+        ESP_LOGI(TAG, "Keyboard hidden due to OK button");
+    }
 }
