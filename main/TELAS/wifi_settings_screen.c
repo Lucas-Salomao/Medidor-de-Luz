@@ -126,6 +126,10 @@ static void back_btn_event_handler(lv_event_t *e) {
 
 static void connect_btn_event_handler(lv_event_t *e) {
     ESP_LOGI(TAG, "Connect button clicked");
+
+    // Exibe mensagem de tentativa de conexão
+    lv_label_set_text(status_label, "Connecting...");
+    lv_obj_set_style_text_color(status_label, lv_color_make(0, 0, 255), LV_PART_MAIN); // Azul para indicar progresso
     
     char selected_ssid[64];
     char password[64];
