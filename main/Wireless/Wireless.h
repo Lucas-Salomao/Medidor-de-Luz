@@ -31,3 +31,6 @@ uint16_t WIFI_Scan(void);
 void BLE_Init(void *arg);
 uint16_t BLE_Scan(void);
 bool WIFI_Connect(const char *ssid, const char *password); // Função para conectar ao Wi-Fi
+void WIFI_Set_Credentials(const char *ssid, const char *password); // Define SSID e senha
+void WIFI_Get_SSID(char *ssid, size_t max_len);                   // Obtém SSID
+void WIFI_Get_Password(char *password, size_t max_len);

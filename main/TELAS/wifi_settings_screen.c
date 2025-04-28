@@ -87,9 +87,6 @@ void wifi_settings_screen_init(void) {
         
         // Populate dropdown with dummy values initially
         lv_dropdown_set_options(ssid_dropdown, "Scanning...");
-        
-        // Schedule Wi-Fi scan to populate the dropdown
-        // This will be called when the screen is loaded
     }
 }
 
@@ -125,22 +122,21 @@ static void connect_btn_event_handler(lv_event_t *e) {
     const char *pwd_text = lv_textarea_get_text(password_input);
     strncpy(password, pwd_text, sizeof(password) - 1);
     password[sizeof(password) - 1] = '\0';
+
+    // Define as credenciais globais
+    WIFI_Set_Credentials(selected_ssid, password);
     
     ESP_LOGI(TAG, "Connecting to SSID: %s", selected_ssid);
     
-    // Here you would call your Wi-Fi connection function
-    // For example:
-    // bool connected = connect_to_wifi(selected_ssid, password);
-    
-    // For demonstration, we'll simulate a connection
-    bool connected = true; // Replace with actual connection attempt
-    
+    // Tenta conectar
+    bool connected = WIFI_Connect(selected_ssid, password);
+
     if (connected) {
         lv_label_set_text(status_label, "Connected successfully!");
-        lv_obj_set_style_text_color(status_label, lv_color_make(0, 128, 0), LV_PART_MAIN); // Green
+        lv_obj_set_style_text_color(status_label, lv_color_make(0, 128, 0), LV_PART_MAIN); // Verde
     } else {
         lv_label_set_text(status_label, "Connection failed. Please try again.");
-        lv_obj_set_style_text_color(status_label, lv_color_make(255, 0, 0), LV_PART_MAIN); // Red
+        lv_obj_set_style_text_color(status_label, lv_color_make(255, 0, 0), LV_PART_MAIN); // Vermelho
     }
 }
 
@@ -166,61 +162,49 @@ static void refresh_btn_event_handler(lv_event_t *e) {
 
 // Task to scan for Wi-Fi networks
 static void scan_wifi_task(void *pvParameters) {
-    // Call your Wi-Fi scan function
-    uint16_t ap_count = WIFI_Scan();
-    
-    // In a real application, you would get the scan results and
-    // update the UI. Here we'll simulate some networks
-    
-    // This needs to run on the main LVGL task
+    // Realiza o escaneamento
+    WIFI_Scan();
+
+    // Atualiza a interface no thread principal do LVGL
     lv_async_call(populate_wifi_dropdown, NULL);
-    
+
     vTaskDelete(NULL);
 }
 
-// This function must be called from the main LVGL task
 static void populate_wifi_dropdown(void *data) {
-    // In a real application, you would get actual scan results
-    // For demo purpose, we'll create a list of dummy networks
-    
-    // Clear status message
+    // Limpa a mensagem de status
     lv_label_set_text(status_label, "");
-    
-    // Check if we actually found networks
+
+    // Verifica se foram encontradas redes
     if (WIFI_NUM == 0) {
         lv_dropdown_set_options(ssid_dropdown, "No networks found");
         lv_label_set_text(status_label, "No Wi-Fi networks detected");
         return;
     }
-    
-    // Create a buffer for the options string
-    // Each option needs to be separated by \n
-    char *buffer = malloc(WIFI_NUM * 32 + 1); // Assuming max 32 chars per SSID
+
+    // Aloca um buffer para as opções do dropdown
+    char *buffer = malloc(WIFI_NUM * 34 + 1); // 33 chars por SSID + \n
     if (buffer == NULL) {
         ESP_LOGE(TAG, "Failed to allocate memory for dropdown options");
+        lv_label_set_text(status_label, "Memory error");
         return;
     }
-    
-    buffer[0] = '\0'; // Initialize empty string
-    
-    // In a real application, you would get actual network names
-    // For demo, we'll use dummy names
-    char temp[64];
+
+    buffer[0] = '\0'; // Inicializa string vazia
+
+    // Preenche o buffer com os SSIDs
     for (int i = 0; i < WIFI_NUM; i++) {
-        snprintf(temp, sizeof(temp), "Network_%d", i+1);
-        
-        // Add to options string with \n separator
         if (i > 0) {
             strcat(buffer, "\n");
         }
-        strcat(buffer, temp);
+        strcat(buffer, wifi_aps[i].ssid);
     }
-    
-    // Update dropdown options
+
+    // Atualiza as opções do dropdown
     lv_dropdown_set_options(ssid_dropdown, buffer);
-    
-    // Free the buffer
+
+    // Libera o buffer
     free(buffer);
-    
-    ESP_LOGI(TAG, "Found %d networks", WIFI_NUM);
+
+    ESP_LOGI(TAG, "Populated dropdown with %d networks", WIFI_NUM);
 }

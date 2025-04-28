@@ -5,6 +5,12 @@ uint16_t WIFI_NUM = 0;
 bool Scan_finish = 0;
 bool WiFi_Scan_Finish = 0;
 bool BLE_Scan_Finish = 0;
+wifi_ap_info_t wifi_aps[MAX_APS]; // Array para armazenar redes escaneadas
+
+// Variáveis globais para SSID e senha
+static char wifi_ssid[33] = "";      // SSID com até 32 caracteres + null
+static char wifi_password[64] = "";   // Senha com até 63 caracteres + null
+static SemaphoreHandle_t wifi_mutex = NULL; // Mutex para proteger acesso
 
 void Wireless_Init(void)
 {
@@ -45,23 +51,127 @@ void WIFI_Init(void *arg)
     esp_wifi_set_mode(WIFI_MODE_STA);              
     esp_wifi_start();                            
 
-    WIFI_NUM = WIFI_Scan();
-    printf("WIFI:%d\r\n",WIFI_NUM);
+    // WIFI_NUM = WIFI_Scan();
+    // printf("WIFI:%d\r\n",WIFI_NUM);
     
     vTaskDelete(NULL);
 }
-uint16_t WIFI_Scan(void)
-{
-    uint16_t ap_count = 0;
-    esp_wifi_scan_start(NULL, true);
-    ESP_ERROR_CHECK(esp_wifi_scan_get_ap_num(&ap_count));
+// uint16_t WIFI_Scan(void)
+// {
+//     uint16_t ap_count = 0;
+//     esp_wifi_scan_start(NULL, true);
+//     ESP_ERROR_CHECK(esp_wifi_scan_get_ap_num(&ap_count));
+//     esp_wifi_scan_stop();
+//     WiFi_Scan_Finish =1;
+//     if(BLE_Scan_Finish == 1)
+//         Scan_finish = 1;
+//     return ap_count;
+// }
+
+uint16_t WIFI_Scan(void) {
+    wifi_scan_config_t scan_config = {
+        .ssid = NULL,
+        .bssid = NULL,
+        .channel = 0,
+        .show_hidden = true,
+    };
+
+    ESP_ERROR_CHECK(esp_wifi_scan_start(&scan_config, true));
+    ESP_ERROR_CHECK(esp_wifi_scan_get_ap_num(&WIFI_NUM));
+
+    if (WIFI_NUM > MAX_APS) {
+        WIFI_NUM = MAX_APS; // Limita ao máximo definido
+    }
+
+    wifi_ap_record_t ap_records[MAX_APS];
+    ESP_ERROR_CHECK(esp_wifi_scan_get_ap_records(&WIFI_NUM, ap_records));
+
+    // Preenche o array global com os SSIDs e RSSI
+    for (int i = 0; i < WIFI_NUM; i++) {
+        strncpy(wifi_aps[i].ssid, (char *)ap_records[i].ssid, sizeof(wifi_aps[i].ssid) - 1);
+        wifi_aps[i].ssid[sizeof(wifi_aps[i].ssid) - 1] = '\0';
+        wifi_aps[i].rssi = ap_records[i].rssi;
+    }
+
     esp_wifi_scan_stop();
-    WiFi_Scan_Finish =1;
-    if(BLE_Scan_Finish == 1)
+    WiFi_Scan_Finish = 1;
+    if (BLE_Scan_Finish == 1) {
         Scan_finish = 1;
-    return ap_count;
+    }
+
+    ESP_LOGI("WIFI", "Found %d networks", WIFI_NUM);
+    return WIFI_NUM;
 }
 
+bool WIFI_Connect(const char *ssid, const char *password) {
+    // Atualiza as credenciais globais
+    WIFI_Set_Credentials(ssid, password);
+
+    wifi_config_t wifi_config = {
+        .sta = {
+            .scan_method = WIFI_ALL_CHANNEL_SCAN,
+            .sort_method = WIFI_CONNECT_AP_BY_SIGNAL,
+        },
+    };
+
+    // Usa as credenciais globais
+    xSemaphoreTake(wifi_mutex, portMAX_DELAY);
+    strncpy((char *)wifi_config.sta.ssid, wifi_ssid, sizeof(wifi_config.sta.ssid) - 1);
+    wifi_config.sta.ssid[sizeof(wifi_config.sta.ssid) - 1] = '\0';
+    strncpy((char *)wifi_config.sta.password, wifi_password, sizeof(wifi_config.sta.password) - 1);
+    wifi_config.sta.password[sizeof(wifi_config.sta.password) - 1] = '\0';
+    xSemaphoreGive(wifi_mutex);
+
+    ESP_ERROR_CHECK(esp_wifi_disconnect());
+    ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
+    ESP_ERROR_CHECK(esp_wifi_connect());
+
+    // Aguarda conexão (timeout de 15 segundos)
+    vTaskDelay(pdMS_TO_TICKS(15000));
+    wifi_ap_record_t ap_info;
+    esp_err_t ret = esp_wifi_sta_get_ap_info(&ap_info);
+    if (ret == ESP_OK) {
+        ESP_LOGI("WIFI", "Connected to %s", wifi_ssid);
+        return true;
+    } else {
+        ESP_LOGE("WIFI", "Failed to connect to %s", wifi_ssid);
+        return false;
+    }
+}
+
+void WIFI_Set_Credentials(const char *ssid, const char *password) {
+    if (ssid == NULL || password == NULL) {
+        ESP_LOGE("WIFI", "Invalid SSID or password");
+        return;
+    }
+
+    xSemaphoreTake(wifi_mutex, portMAX_DELAY);
+    strncpy(wifi_ssid, ssid, sizeof(wifi_ssid) - 1);
+    wifi_ssid[sizeof(wifi_ssid) - 1] = '\0';
+    strncpy(wifi_password, password, sizeof(wifi_password) - 1);
+    wifi_password[sizeof(wifi_password) - 1] = '\0';
+    xSemaphoreGive(wifi_mutex);
+
+    ESP_LOGI("WIFI", "Credentials set: SSID=%s", wifi_ssid);
+}
+
+void WIFI_Get_SSID(char *ssid, size_t max_len) {
+    if (ssid == NULL || max_len == 0) return;
+
+    xSemaphoreTake(wifi_mutex, portMAX_DELAY);
+    strncpy(ssid, wifi_ssid, max_len - 1);
+    ssid[max_len - 1] = '\0';
+    xSemaphoreGive(wifi_mutex);
+}
+
+void WIFI_Get_Password(char *password, size_t max_len) {
+    if (password == NULL || max_len == 0) return;
+
+    xSemaphoreTake(wifi_mutex, portMAX_DELAY);
+    strncpy(password, wifi_password, max_len - 1);
+    password[max_len - 1] = '\0';
+    xSemaphoreGive(wifi_mutex);
+}
 
 #define GATTC_TAG "GATTC_TAG"
 #define SCAN_DURATION 5  
