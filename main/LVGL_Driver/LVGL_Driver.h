@@ -22,5 +22,6 @@ void example_lvgl_flush_cb(lv_disp_drv_t *drv, const lv_area_t *area, lv_color_t
 /* Rotate display and touch, when rotated screen in LVGL. Called when driver parameters are updated. */
 void example_lvgl_port_update_callback(lv_disp_drv_t *drv);
 void example_increase_lvgl_tick(void *arg);
+void example_touchpad_read(lv_indev_drv_t *drv, lv_indev_data_t *data);
 
 void LVGL_Init(void);                     // Call this function to initialize the screen (must be called in the main function) !!!!!

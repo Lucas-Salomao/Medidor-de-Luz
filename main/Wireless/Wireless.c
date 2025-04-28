@@ -1,5 +1,6 @@
 #include "Wireless.h"
 
+static const char *TAG_WIFI = "WIFI";
 uint16_t BLE_NUM = 0;
 uint16_t WIFI_NUM = 0;
 bool Scan_finish = 0;
@@ -11,9 +12,28 @@ wifi_ap_info_t wifi_aps[MAX_APS]; // Array para armazenar redes escaneadas
 static char wifi_ssid[33] = "";      // SSID com até 32 caracteres + null
 static char wifi_password[64] = "";   // Senha com até 63 caracteres + null
 static SemaphoreHandle_t wifi_mutex = NULL; // Mutex para proteger acesso
+static bool mutex_initialized = false; // Flag para verificar inicialização
 
 void Wireless_Init(void)
 {
+    // Log para confirmar que a função foi chamada
+    ESP_LOGI("WIFI", "Wireless_Init started");
+    ESP_LOGI("WIFI", "Free heap before init: %lu bytes", (unsigned long)esp_get_free_heap_size());
+
+    // Verifica o heap disponível
+    ESP_LOGI("WIFI", "Free heap before mutex creation: %lu bytes", esp_get_free_heap_size());
+
+    // Inicializa o mutex
+    if (!mutex_initialized) {
+        wifi_mutex = xSemaphoreCreateMutex();
+        if (wifi_mutex == NULL) {
+            ESP_LOGE("WIFI", "Failed to create mutex. System will halt.");
+            while (1); // Para o sistema para evitar uso de mutex nulo
+        }
+        mutex_initialized = true;
+        ESP_LOGI("WIFI", "Mutex initialized successfully");
+    }
+
     // Initialize NVS.
     esp_err_t ret = nvs_flash_init();
     if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
@@ -39,6 +59,10 @@ void Wireless_Init(void)
     //     2, 
     //     NULL, 
     //     0);
+
+    
+    ESP_LOGI(TAG_WIFI, "Wireless_Init completed, free heap: %lu bytes", esp_get_free_heap_size());
+    ESP_LOGI("WIFI", "Wireless_Init completed");
 }
 
 void WIFI_Init(void *arg)
@@ -104,6 +128,19 @@ uint16_t WIFI_Scan(void) {
 }
 
 bool WIFI_Connect(const char *ssid, const char *password) {
+
+    ESP_LOGI("WIFI", "WIFI_Connect started, free heap: %lu bytes", (unsigned long)esp_get_free_heap_size());
+    if (esp_get_free_heap_size() < 20000) {
+        ESP_LOGE("WIFI", "Low heap size (%lu bytes). Aborting connection.", (unsigned long)esp_get_free_heap_size());
+        return false;
+    }
+
+    // Verifica se o mutex está inicializado
+    if (!mutex_initialized) {
+        ESP_LOGE("WIFI", "Mutex not initialized. Cannot connect.");
+        return false;
+    }
+
     // Atualiza as credenciais globais
     WIFI_Set_Credentials(ssid, password);
 
@@ -122,19 +159,27 @@ bool WIFI_Connect(const char *ssid, const char *password) {
     wifi_config.sta.password[sizeof(wifi_config.sta.password) - 1] = '\0';
     xSemaphoreGive(wifi_mutex);
 
+    ESP_LOGI("WIFI", "Configuring Wi-Fi with SSID: %s, Password length: %d", wifi_config.sta.ssid, strlen((char *)wifi_config.sta.password));
+
     ESP_ERROR_CHECK(esp_wifi_disconnect());
     ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
-    ESP_ERROR_CHECK(esp_wifi_connect());
+    ESP_LOGI("WIFI", "Starting Wi-Fi connection, free heap: %lu bytes", (unsigned long)esp_get_free_heap_size());
+
+    esp_err_t ret = esp_wifi_connect();
+    if (ret != ESP_OK) {
+        ESP_LOGE("WIFI", "Failed to start connection: %s", esp_err_to_name(ret));
+        return false;
+    }
 
     // Aguarda conexão (timeout de 15 segundos)
     vTaskDelay(pdMS_TO_TICKS(15000));
     wifi_ap_record_t ap_info;
-    esp_err_t ret = esp_wifi_sta_get_ap_info(&ap_info);
+    ret = esp_wifi_sta_get_ap_info(&ap_info);
     if (ret == ESP_OK) {
         ESP_LOGI("WIFI", "Connected to %s", wifi_ssid);
         return true;
     } else {
-        ESP_LOGE("WIFI", "Failed to connect to %s", wifi_ssid);
+        ESP_LOGE("WIFI", "Failed to connect to %s: %s", wifi_ssid, esp_err_to_name(ret));
         return false;
     }
 }
@@ -142,6 +187,11 @@ bool WIFI_Connect(const char *ssid, const char *password) {
 void WIFI_Set_Credentials(const char *ssid, const char *password) {
     if (ssid == NULL || password == NULL) {
         ESP_LOGE("WIFI", "Invalid SSID or password");
+        return;
+    }
+
+    if (!mutex_initialized) {
+        ESP_LOGE("WIFI", "Mutex not initialized. Cannot set credentials.");
         return;
     }
 
@@ -153,24 +203,35 @@ void WIFI_Set_Credentials(const char *ssid, const char *password) {
     xSemaphoreGive(wifi_mutex);
 
     ESP_LOGI("WIFI", "Credentials set: SSID=%s", wifi_ssid);
+    ESP_LOGI("WIFI", "Credentials set: Password=%s", password);
 }
 
 void WIFI_Get_SSID(char *ssid, size_t max_len) {
     if (ssid == NULL || max_len == 0) return;
 
-    xSemaphoreTake(wifi_mutex, portMAX_DELAY);
-    strncpy(ssid, wifi_ssid, max_len - 1);
-    ssid[max_len - 1] = '\0';
-    xSemaphoreGive(wifi_mutex);
+    if (mutex_initialized) {
+        xSemaphoreTake(wifi_mutex, portMAX_DELAY);
+        strncpy(ssid, wifi_ssid, max_len - 1);
+        ssid[max_len - 1] = '\0';
+        xSemaphoreGive(wifi_mutex);
+    } else {
+        ssid[0] = '\0'; // Retorna string vazia se mutex não estiver inicializado
+        ESP_LOGE("WIFI", "Mutex not initialized. Cannot get SSID.");
+    }
 }
 
 void WIFI_Get_Password(char *password, size_t max_len) {
     if (password == NULL || max_len == 0) return;
 
-    xSemaphoreTake(wifi_mutex, portMAX_DELAY);
-    strncpy(password, wifi_password, max_len - 1);
-    password[max_len - 1] = '\0';
-    xSemaphoreGive(wifi_mutex);
+    if (mutex_initialized) {
+        xSemaphoreTake(wifi_mutex, portMAX_DELAY);
+        strncpy(password, wifi_password, max_len - 1);
+        password[max_len - 1] = '\0';
+        xSemaphoreGive(wifi_mutex);
+    } else {
+        password[0] = '\0'; // Retorna string vazia se mutex não estiver inicializado
+        ESP_LOGE("WIFI", "Mutex not initialized. Cannot get password.");
+    }
 }
 
 #define GATTC_TAG "GATTC_TAG"

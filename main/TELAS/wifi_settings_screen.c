@@ -142,7 +142,7 @@ static void connect_btn_event_handler(lv_event_t *e) {
     // Define as credenciais globais
     WIFI_Set_Credentials(selected_ssid, password);
     
-    ESP_LOGI(TAG, "Connecting to SSID: %s", selected_ssid);
+    ESP_LOGI(TAG, "Connecting to SSID: %s with password: %s", selected_ssid, password);
     
     // Tenta conectar
     bool connected = WIFI_Connect(selected_ssid, password);

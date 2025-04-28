@@ -42,7 +42,7 @@ void Driver_Init(void)
     I2C_Init();
     PCF85063_Init();
     QMI8658_Init();
-    // Flash_Searching();
+    Flash_Searching();
     VEML7700_Init(I2C_NUM_0);
     xTaskCreatePinnedToCore(
         Driver_Loop, 

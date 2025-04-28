@@ -2,10 +2,10 @@
 
 static const char *TAG_LVGL = "LVGL";
 
-void *buf1 = NULL;
-void *buf2 = NULL;
-// static lv_color_t buf1[ LVGL_BUF_LEN ];
-// static lv_color_t buf2[ LVGL_BUF_LEN];
+// void *buf1 = NULL;
+// void *buf2 = NULL;
+static lv_color_t buf1[ LVGL_BUF_LEN ];
+static lv_color_t buf2[ LVGL_BUF_LEN];
     
 
 lv_disp_draw_buf_t disp_buf;                                                 // contains internal graphic buffer(s) called draw buffer(s)
@@ -96,10 +96,10 @@ void LVGL_Init(void)
     ESP_LOGI(TAG_LVGL, "Initialize LVGL library");
     lv_init();
     
-    buf1 = heap_caps_malloc(LVGL_BUF_LEN , MALLOC_CAP_SPIRAM);
-    assert(buf1);
-    buf2 = heap_caps_malloc(LVGL_BUF_LEN , MALLOC_CAP_SPIRAM);    
-    assert(buf2);
+    // buf1 = heap_caps_malloc(LVGL_BUF_LEN , MALLOC_CAP_SPIRAM);
+    // assert(buf1);
+    // buf2 = heap_caps_malloc(LVGL_BUF_LEN , MALLOC_CAP_SPIRAM);    
+    // assert(buf2);
     lv_disp_draw_buf_init(&disp_buf, buf1, buf2, LVGL_BUF_LEN);                              // initialize LVGL draw buffers
 
     ESP_LOGI(TAG_LVGL, "Register display driver to LVGL");

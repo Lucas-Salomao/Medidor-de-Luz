@@ -65,7 +65,8 @@
     "stdarg.h": "c",
     "clock_settings_screen.h": "c",
     "fluximeter_screen.h": "c",
-    "font_awesome_icons.h": "c"
+    "font_awesome_icons.h": "c",
+    "esp_sntp.h": "c"
   },
   "idf.adapterTargetName": "esp32s3",
   "idf.openOcdConfigs": [
