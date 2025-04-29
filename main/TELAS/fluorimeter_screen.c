@@ -11,6 +11,12 @@ static char datetime_str[50];
 static uint8_t medidas = 10;
 static uint8_t delay_medidas = 50;
 static float lux_offset = 0.0f; // Offset de zeramento do sensor
+static lv_obj_t *id_input = NULL;
+static lv_obj_t *keyboard = NULL; // Objeto do teclado
+
+static void id_input_event_handler(lv_event_t *e);
+static void screen_click_event_handler(lv_event_t *e);
+static void keyboard_close_handler(lv_event_t *e);  
 
 void update_lux_value(float lux) {
     char buf[32];
@@ -120,6 +126,10 @@ void zero_btn_event_handler(lv_event_t *e) {
 
 // Função para carregar a tela do fluxímetro
 void create_main_screen(lv_obj_t *parent) {
+    
+    // Adiciona evento de clique na tela para fechar o teclado
+    lv_obj_add_event_cb(parent, screen_click_event_handler, LV_EVENT_CLICKED, NULL);
+
     lv_obj_t *title = lv_label_create(parent);
     lv_label_set_text(title, "FLUORIMETER");
     lv_obj_set_style_text_font(title, &lv_font_montserrat_16, 0);
@@ -164,5 +174,55 @@ void create_main_screen(lv_obj_t *parent) {
     lv_label_set_text(label_zero, "CALIBRATE");
     lv_obj_set_style_text_font(label_zero, &lv_font_montserrat_16, 0);
     lv_obj_align(label_zero, LV_ALIGN_CENTER, 0, 0);
+
+    // Id Label
+    lv_obj_t *id_label = lv_label_create(parent);
+    lv_label_set_text(id_label, "Sample identification");
+    lv_obj_set_style_text_color(id_label, lv_color_black(), LV_PART_MAIN);
+    lv_obj_align(id_label, LV_ALIGN_TOP_LEFT, 20, 160);
     
+    // Id Input
+    id_input = lv_textarea_create(parent);
+    lv_textarea_set_password_mode(id_input, false);
+    lv_textarea_set_one_line(id_input, true);
+    lv_obj_set_size(id_input, 200, 40);
+    lv_obj_align(id_input, LV_ALIGN_TOP_LEFT, 20, 180);
+    lv_obj_add_event_cb(id_input, id_input_event_handler, LV_EVENT_CLICKED, NULL);
+
+    // Inicializa o teclado
+    keyboard = lv_keyboard_create(parent);
+    lv_obj_set_size(keyboard, 240, 120);
+    lv_obj_align(keyboard, LV_ALIGN_BOTTOM_MID, 0, 0);
+    lv_keyboard_set_textarea(keyboard, id_input);
+    lv_obj_add_flag(keyboard, LV_OBJ_FLAG_HIDDEN);
+    lv_keyboard_set_mode(keyboard, LV_KEYBOARD_MODE_TEXT_LOWER);
+    // Adiciona evento para fechar o teclado ao pressionar "OK"
+    lv_obj_add_event_cb(keyboard, keyboard_close_handler, LV_EVENT_READY, NULL);
+    
+}
+
+static void id_input_event_handler(lv_event_t *e) {
+    ESP_LOGI(TAG, "ID input clicked");
+    // Mostra o teclado
+    if (keyboard != NULL) {
+        lv_obj_clear_flag(keyboard, LV_OBJ_FLAG_HIDDEN);
+        lv_keyboard_set_textarea(keyboard, id_input);
+    }
+}
+
+static void screen_click_event_handler(lv_event_t *e) {
+    // Fecha o teclado se o clique for fora do password_input
+    lv_obj_t *target = lv_event_get_target(e);
+    if (target != id_input && keyboard != NULL && !lv_obj_has_flag(keyboard, LV_OBJ_FLAG_HIDDEN)) {
+        lv_obj_add_flag(keyboard, LV_OBJ_FLAG_HIDDEN);
+        ESP_LOGI(TAG, "Keyboard hidden due to screen click");
+    }
+}
+
+static void keyboard_close_handler(lv_event_t *e) {
+    // Fecha o teclado quando o botão "OK" for pressionado
+    if (keyboard != NULL) {
+        lv_obj_add_flag(keyboard, LV_OBJ_FLAG_HIDDEN);
+        ESP_LOGI(TAG, "Keyboard hidden due to OK button");
+    }
 }
