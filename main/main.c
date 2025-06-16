@@ -11,17 +11,6 @@
 #include "Screens.h"
 #include "fluorimeter_screen.h"
 
-
-void sensor_task(void *arg) {
-    while (1) {
-        float lux;
-        if (VEML7700_Read_Lux(&lux) == ESP_OK) {
-            update_lux_value(lux);
-        }
-        vTaskDelay(pdMS_TO_TICKS(500));
-    }
-}
-
 void Driver_Loop(void *parameter)
 {
     Wireless_Init();
@@ -65,7 +54,7 @@ void app_main(void)
     setup_ui();
 
     // Cria a tarefa para leitura do sensor
-    xTaskCreatePinnedToCore(sensor_task, "Sensor Task", 4096, NULL, 2, NULL, 0);
+    // xTaskCreatePinnedToCore(sensor_task, "Sensor Task", 4096, NULL, 2, NULL, 0);
 
     while (1) {
         // raise the task priority of LVGL and/or reduce the handler period can improve the performance
