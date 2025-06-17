@@ -39,6 +39,12 @@ static lv_obj_t *measure_btn = NULL;
 static lv_obj_t *save_btn = NULL;
 static lv_obj_t *repeat_btn = NULL;
 
+// --- Componentes do Modal de ID ---
+static lv_obj_t *id_modal_bg = NULL;    // Fundo semitransparente do modal
+static lv_obj_t *id_modal_cont = NULL;  // Contêiner do modal
+static lv_obj_t *id_input_textarea = NULL;
+static lv_obj_t *keyboard = NULL;
+
 static float lux_offset = 0.0f;
 static float last_measurement = 0.0f;
 static char datetime_str[50];
@@ -58,6 +64,11 @@ static void zero_sensor_task(void *pvParameters);
 static void measure_sensor_task(void *pvParameters);
 static esp_err_t perform_measurement_sampling(float *final_avg_lux, const char* base_message);
 static void return_to_zeroing_state_cb(lv_timer_t *timer);
+
+// --- Novas declarações para o modal de ID ---
+static void create_id_modal(lv_obj_t *parent);
+static void id_kb_confirm_event_handler(lv_event_t *e);
+static void id_modal_close_event_handler(lv_event_t *e);
 
 
 // Estrutura para passar dados para a chamada assíncrona do LVGL
@@ -144,6 +155,92 @@ static void update_ui_for_state(screen_state_t new_state) {
             lv_obj_clear_flag(repeat_btn, LV_OBJ_FLAG_HIDDEN);
             Play_Music("/sdcard", AUDIO_RESULT_PROMPT);
             break;
+    }
+}
+
+// **NOVA FUNÇÃO para criar o modal de ID e o teclado**
+static void create_id_modal(lv_obj_t *parent) {
+    // Fundo semitransparente para focar no modal
+    id_modal_bg = lv_obj_create(parent);
+    lv_obj_remove_style_all(id_modal_bg);
+    lv_obj_set_size(id_modal_bg, LV_PCT(100), LV_PCT(100));
+    lv_obj_set_style_bg_color(id_modal_bg, lv_color_black(), 0);
+    lv_obj_set_style_bg_opa(id_modal_bg, LV_OPA_50, 0);
+    lv_obj_add_event_cb(id_modal_bg, id_modal_close_event_handler, LV_EVENT_CLICKED, NULL);
+
+    // Contêiner principal do modal
+    id_modal_cont = lv_obj_create(id_modal_bg);
+    lv_obj_set_size(id_modal_cont, 220, 200);   // Tamanho do contêiner
+    lv_obj_center(id_modal_cont);
+    lv_obj_set_style_bg_color(id_modal_cont, lv_color_white(), 0);
+    lv_obj_set_style_border_width(id_modal_cont, 0, 0);
+
+    // Rótulo de instrução
+    lv_obj_t *label = lv_label_create(id_modal_cont);
+    lv_label_set_text(label, "Enter Sample ID:");
+    lv_obj_align(label, LV_ALIGN_TOP_LEFT, 10, 10);
+
+    // Área de texto para o ID
+    id_input_textarea = lv_textarea_create(id_modal_cont);
+    lv_obj_set_size(id_input_textarea, 200, 40);
+    lv_obj_align(id_input_textarea, LV_ALIGN_TOP_LEFT, 10, 35);
+    lv_textarea_set_one_line(id_input_textarea, true);
+    lv_textarea_set_placeholder_text(id_input_textarea, "ID...");
+
+    // Teclado
+    keyboard = lv_keyboard_create(id_modal_bg); // Anexado ao fundo para posicionamento global
+    lv_obj_set_size(keyboard, 240, 140);
+    lv_obj_align(keyboard, LV_ALIGN_BOTTOM_MID, 0, 0);
+    lv_keyboard_set_textarea(keyboard, id_input_textarea);
+    lv_obj_add_event_cb(keyboard, id_kb_confirm_event_handler, LV_EVENT_READY, keyboard); // Ok/Enter
+    lv_obj_add_event_cb(keyboard, id_modal_close_event_handler, LV_EVENT_CANCEL, keyboard); // Cancelar
+}
+
+// **NOVA FUNÇÃO: Callback para o 'confirmar' do teclado**
+static void id_kb_confirm_event_handler(lv_event_t *e) {
+    const char *sample_id = lv_textarea_get_text(id_input_textarea);
+    
+    if (sample_id == NULL || strlen(sample_id) == 0) {
+        lv_label_set_text(instruction_label, "ID cannot be empty!");
+        // O modal não fecha, o usuário deve corrigir
+        return;
+    }
+
+    ESP_LOGI(TAG_MAIN_SCREEN, "Saving with ID: %s", sample_id);
+    
+    FILE* f = fopen("/sdcard/measurements.csv", "a+");
+    if (f == NULL) {
+        ESP_LOGE(TAG_MAIN_SCREEN, "Failed to open measurements.csv for appending.");
+        lv_label_set_text(instruction_label, "SD Card Error!");
+    } else {
+        fseek(f, 0, SEEK_END);
+        long size = ftell(f);
+        if (size == 0) {
+            fprintf(f, "SampleID,Measurement,Time\n");
+            ESP_LOGI(TAG_MAIN_SCREEN, "CSV header written.");
+        }
+
+        update_datetime_label();
+        fprintf(f, "\"%s\",%.2f,\"%s\"\n", sample_id, last_measurement, datetime_str);
+        fclose(f);
+        ESP_LOGI(TAG_MAIN_SCREEN, "Data saved to CSV.");
+        lv_label_set_text(instruction_label, "Saved!");
+    }
+
+    // Fecha o modal e agenda o retorno ao estado inicial
+    lv_obj_del(id_modal_bg);
+    id_modal_bg = NULL;
+    lv_timer_t *timer = lv_timer_create(return_to_zeroing_state_cb, 1500, NULL);
+    lv_timer_set_repeat_count(timer, 1);
+}
+
+// **NOVA FUNÇÃO: Callback para fechar o modal (fundo ou botão de cancelar)**
+static void id_modal_close_event_handler(lv_event_t *e) {
+    if (id_modal_bg != NULL) {
+        lv_obj_del(id_modal_bg);
+        id_modal_bg = NULL; // Importante para evitar uso após deleção
+        keyboard = NULL;
+        id_input_textarea = NULL;
     }
 }
 
@@ -255,36 +352,10 @@ static void measure_btn_event_handler(lv_event_t *e) {
     xTaskCreate(measure_sensor_task, "measure_task", 4096, NULL, 5, NULL);
 }
 
+// **FUNÇÃO DE SALVAR MODIFICADA: Agora abre o modal**
 static void save_btn_event_handler(lv_event_t *e) {
-    ESP_LOGI(TAG_MAIN_SCREEN, "Save button clicked");
-    
-    FILE* f = fopen("/sdcard/measurements.csv", "a+");
-    if (f == NULL) {
-        ESP_LOGE(TAG_MAIN_SCREEN, "Failed to open measurements.csv for appending.");
-        lv_label_set_text(instruction_label, "SD Card Error!");
-        // Cria um timer para voltar ao estado inicial após 2 segundos
-        lv_timer_t *t = lv_timer_create(return_to_zeroing_state_cb, 2000, NULL);
-        lv_timer_set_repeat_count(t, 1);
-        return;
-    }
-
-    fseek(f, 0, SEEK_END);
-    long size = ftell(f);
-    if (size == 0) {
-        fprintf(f, "Measurement,Time\n");
-        ESP_LOGI(TAG_MAIN_SCREEN, "CSV header written to measurements.csv");
-    }
-
-    update_datetime_label(); 
-    fprintf(f, "%.2f,\"%s\"\n", last_measurement, datetime_str);
-    fclose(f);
-
-    ESP_LOGI(TAG_MAIN_SCREEN, "Data saved to CSV.");
-    lv_label_set_text(instruction_label, "Saved!");
-
-    // Cria um timer one-shot que chamará a função de callback após 1.5 segundos
-    lv_timer_t *timer = lv_timer_create(return_to_zeroing_state_cb, 1500, NULL);
-    lv_timer_set_repeat_count(timer, 1); // Garante que o timer execute apenas uma vez
+    ESP_LOGI(TAG_MAIN_SCREEN, "Save button clicked, showing ID modal.");
+    create_id_modal(lv_layer_top()); // Cria o modal na camada superior para sobrepor tudo
 }
 
 static void repeat_btn_event_handler(lv_event_t *e) {
