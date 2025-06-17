@@ -2,6 +2,7 @@
 #include "splash_screen.h"
 #include "settings_screen.h"
 #include "fluorimeter_screen.h"
+#include "PCM5101.h"
 
 #include "esp_log.h"
 #include "esp_wifi.h"
@@ -20,7 +21,6 @@ lv_obj_t *clock_config_screen = NULL;
 lv_obj_t *wifi_config_screen = NULL;
 lv_timer_t *splash_timer = NULL;
 lv_obj_t *lux_label = NULL;
-
 
 void setup_ui(void) {
     // ESP_LOGI(TAG, "Inicializando UI");
@@ -58,6 +58,14 @@ void setup_ui(void) {
 }
 
 void splash_timer_callback(lv_timer_t *timer) {
-    // ESP_LOGI(TAG, "Carregando tela principal após splash");
+    ESP_LOGI(TAG, "Carregando tela principal após splash");
     lv_scr_load_anim(main_screen, LV_SCR_LOAD_ANIM_FADE_ON, 500, 0, false);
+    
+    // Toca o primeiro áudio aqui, após a tela principal ser carregada
+    Play_Music("/sdcard", "zero_prompt.mp3");
+
+    // Reseta a flag para permitir que os sons toquem normalmente a partir de agora
+    if (is_first_load) {
+        is_first_load = false;
+    }
 }

@@ -7,6 +7,7 @@
 #include "VEML7700.h"
 #include "SD_MMC.h"
 #include "driver/gpio.h"
+#include "PCM5101.h"
 
 static const char *TAG_MAIN_SCREEN = "FLUORIMETER_SCREEN";
 
@@ -15,6 +16,11 @@ static const char *TAG_MAIN_SCREEN = "FLUORIMETER_SCREEN";
 #define MAIN_REPETITIONS 3      // Quantas vezes o ciclo de 1s de medição se repete
 #define SAMPLING_DURATION_MS 1000 // Duração de cada ciclo de medição (1 segundo)
 #define SAMPLING_INTERVAL_MS 100  // Intervalo entre as leituras dentro de um ciclo
+
+// --- Nomes dos Arquivos de Áudio ---
+#define AUDIO_ZERO_PROMPT    "zero_prompt.mp3"
+#define AUDIO_MEASURE_PROMPT "measure_prompt.mp3"
+#define AUDIO_RESULT_PROMPT  "result_prompt.mp3"
 
 // Definição dos estados da tela
 typedef enum {
@@ -36,6 +42,8 @@ static lv_obj_t *repeat_btn = NULL;
 static float lux_offset = 0.0f;
 static float last_measurement = 0.0f;
 static char datetime_str[50];
+
+bool is_first_load = true;
 
 // --- Declarações de Funções ---
 static void update_datetime_label(void);
@@ -111,23 +119,30 @@ static void update_ui_for_state(screen_state_t new_state) {
     lv_obj_add_flag(save_btn, LV_OBJ_FLAG_HIDDEN);
     lv_obj_add_flag(repeat_btn, LV_OBJ_FLAG_HIDDEN);
 
+    bool play_audio = !is_first_load;
+
     switch (current_state) {
         case STATE_ZEROING_PROMPT:
             lv_label_set_text(instruction_label, "Place the blank for zeroing");
             lv_label_set_text(value_label, "Lux: --");
             lv_obj_clear_flag(zero_btn, LV_OBJ_FLAG_HIDDEN);
+            if (play_audio) {
+                Play_Music("/sdcard", AUDIO_ZERO_PROMPT);
+            }
             break;
 
         case STATE_MEASURE_PROMPT:
             lv_label_set_text(instruction_label, "Insert the sample");
             lv_label_set_text(value_label, "Lux: 0.00");
             lv_obj_clear_flag(measure_btn, LV_OBJ_FLAG_HIDDEN);
+            Play_Music("/sdcard", AUDIO_MEASURE_PROMPT);
             break;
 
         case STATE_SHOW_RESULT:
             lv_label_set_text(instruction_label, "Measurement completed");
             lv_obj_clear_flag(save_btn, LV_OBJ_FLAG_HIDDEN);
             lv_obj_clear_flag(repeat_btn, LV_OBJ_FLAG_HIDDEN);
+            Play_Music("/sdcard", AUDIO_RESULT_PROMPT);
             break;
     }
 }
