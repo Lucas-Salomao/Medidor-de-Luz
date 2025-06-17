@@ -49,6 +49,7 @@ static void repeat_btn_event_handler(lv_event_t *e);
 static void zero_sensor_task(void *pvParameters);
 static void measure_sensor_task(void *pvParameters);
 static esp_err_t perform_measurement_sampling(float *final_avg_lux, const char* base_message);
+static void return_to_zeroing_state_cb(lv_timer_t *timer);
 
 
 // Estrutura para passar dados para a chamada assíncrona do LVGL
@@ -225,6 +226,10 @@ static void measure_sensor_task(void *pvParameters) {
 
 //--- Callbacks de botões ---
 
+static void return_to_zeroing_state_cb(lv_timer_t *timer) {
+    update_ui_for_state(STATE_MEASURE_PROMPT);
+}
+
 static void zero_btn_event_handler(lv_event_t *e) {
     ESP_LOGI(TAG_MAIN_SCREEN, "Zero button clicked");
     xTaskCreate(zero_sensor_task, "zero_task", 4096, NULL, 5, NULL);
@@ -238,17 +243,16 @@ static void measure_btn_event_handler(lv_event_t *e) {
 static void save_btn_event_handler(lv_event_t *e) {
     ESP_LOGI(TAG_MAIN_SCREEN, "Save button clicked");
     
-    // Abre o arquivo em modo "append+" (cria se não existir)
     FILE* f = fopen("/sdcard/measurements.csv", "a+");
     if (f == NULL) {
         ESP_LOGE(TAG_MAIN_SCREEN, "Failed to open measurements.csv for appending.");
         lv_label_set_text(instruction_label, "SD Card Error!");
-        lv_timer_t *t = lv_timer_create( (void*)update_ui_for_state, 2000, (void*)STATE_ZEROING_PROMPT);
+        // Cria um timer para voltar ao estado inicial após 2 segundos
+        lv_timer_t *t = lv_timer_create(return_to_zeroing_state_cb, 2000, NULL);
         lv_timer_set_repeat_count(t, 1);
         return;
     }
 
-    // Verifica se o arquivo está vazio para escrever o cabeçalho
     fseek(f, 0, SEEK_END);
     long size = ftell(f);
     if (size == 0) {
@@ -256,7 +260,6 @@ static void save_btn_event_handler(lv_event_t *e) {
         ESP_LOGI(TAG_MAIN_SCREEN, "CSV header written to measurements.csv");
     }
 
-    // Garante que o timestamp está atualizado e o anexa ao arquivo
     update_datetime_label(); 
     fprintf(f, "%.2f,\"%s\"\n", last_measurement, datetime_str);
     fclose(f);
@@ -264,9 +267,9 @@ static void save_btn_event_handler(lv_event_t *e) {
     ESP_LOGI(TAG_MAIN_SCREEN, "Data saved to CSV.");
     lv_label_set_text(instruction_label, "Saved!");
 
-    // Retorna ao estado inicial após um tempo
-    lv_timer_t *timer = lv_timer_create((void*)update_ui_for_state, 1500, (void*)STATE_ZEROING_PROMPT);
-    lv_timer_set_repeat_count(timer, 1);
+    // Cria um timer one-shot que chamará a função de callback após 1.5 segundos
+    lv_timer_t *timer = lv_timer_create(return_to_zeroing_state_cb, 1500, NULL);
+    lv_timer_set_repeat_count(timer, 1); // Garante que o timer execute apenas uma vez
 }
 
 static void repeat_btn_event_handler(lv_event_t *e) {
