@@ -130,6 +130,8 @@ static void update_ui_for_state(screen_state_t new_state) {
     lv_obj_add_flag(save_btn, LV_OBJ_FLAG_HIDDEN);
     lv_obj_add_flag(repeat_btn, LV_OBJ_FLAG_HIDDEN);
 
+    lv_obj_set_style_text_color(instruction_label, lv_color_black(), 0);
+
     bool play_audio = !is_first_load;
 
     switch (current_state) {
@@ -202,6 +204,7 @@ static void id_kb_confirm_event_handler(lv_event_t *e) {
     
     if (sample_id == NULL || strlen(sample_id) == 0) {
         lv_label_set_text(instruction_label, "ID cannot be empty!");
+        lv_obj_set_style_text_color(instruction_label, lv_color_hex(0xFF0000), 0);
         // O modal não fecha, o usuário deve corrigir
         return;
     }
@@ -212,6 +215,7 @@ static void id_kb_confirm_event_handler(lv_event_t *e) {
     if (f == NULL) {
         ESP_LOGE(TAG_MAIN_SCREEN, "Failed to open measurements.csv for appending.");
         lv_label_set_text(instruction_label, "SD Card Error!");
+        lv_obj_set_style_text_color(instruction_label, lv_color_hex(0xFF0000), 0);
     } else {
         fseek(f, 0, SEEK_END);
         long size = ftell(f);
@@ -225,12 +229,14 @@ static void id_kb_confirm_event_handler(lv_event_t *e) {
         fclose(f);
         ESP_LOGI(TAG_MAIN_SCREEN, "Data saved to CSV.");
         lv_label_set_text(instruction_label, "Saved!");
+        lv_obj_set_style_text_color(instruction_label, lv_color_hex(0x008000), 0);
+        Play_Music("/sdcard", "save_success.mp3");
     }
 
     // Fecha o modal e agenda o retorno ao estado inicial
     lv_obj_del(id_modal_bg);
     id_modal_bg = NULL;
-    lv_timer_t *timer = lv_timer_create(return_to_zeroing_state_cb, 1500, NULL);
+    lv_timer_t *timer = lv_timer_create(return_to_zeroing_state_cb, 2000, NULL);
     lv_timer_set_repeat_count(timer, 1);
 }
 
@@ -251,6 +257,8 @@ static esp_err_t perform_measurement_sampling(float *final_avg_lux, const char* 
     float total_avg_sum = 0.0f;
     int successful_repetitions = 0;
 
+    gpio_set_level(LED_PIN, 1); // Acende o LED
+
     for (int i = 0; i < MAIN_REPETITIONS; i++) {
         // Atualiza a UI para mostrar o progresso
         async_label_data_t *progress_data = malloc(sizeof(async_label_data_t));
@@ -259,8 +267,6 @@ static esp_err_t perform_measurement_sampling(float *final_avg_lux, const char* 
             snprintf(progress_data->text, sizeof(progress_data->text), "%s... (%d/%d)", base_message, i + 1, MAIN_REPETITIONS);
             lv_async_call(async_update_label_cb, progress_data);
         }
-
-        gpio_set_level(LED_PIN, 1); // Acende o LED
 
         float lux_sum_single_cycle = 0.0f;
         int successful_reads_single_cycle = 0;
@@ -274,13 +280,13 @@ static esp_err_t perform_measurement_sampling(float *final_avg_lux, const char* 
             vTaskDelay(pdMS_TO_TICKS(SAMPLING_INTERVAL_MS));
         }
         
-        gpio_set_level(LED_PIN, 0); // Apaga o LED
-
         if (successful_reads_single_cycle > 0) {
             total_avg_sum += (lux_sum_single_cycle / successful_reads_single_cycle);
             successful_repetitions++;
         }
     }
+
+    gpio_set_level(LED_PIN, 0); // Apaga o LED
 
     if (successful_repetitions > 0) {
         *final_avg_lux = total_avg_sum / successful_repetitions;

@@ -3,6 +3,7 @@
 #include "Wireless.h"
 #include "esp_log.h"
 #include "Screens.h"
+#include "PCM5101.h"
 
 static lv_obj_t *wifi_screen = NULL;
 static lv_obj_t *ssid_dropdown = NULL;
@@ -154,9 +155,11 @@ static void connect_btn_event_handler(lv_event_t *e) {
     if (connected) {
         lv_label_set_text(status_label, "Connected successfully!");
         lv_obj_set_style_text_color(status_label, lv_color_make(0, 128, 0), LV_PART_MAIN); // Verde
+        Play_Music("/sdcard", "wifi_connected.mp3");
     } else {
         lv_label_set_text(status_label, "Connection failed. Please try again.");
         lv_obj_set_style_text_color(status_label, lv_color_make(255, 0, 0), LV_PART_MAIN); // Vermelho
+        Play_Music("/sdcard", "wifi_error.mp3");
     }
 }
 
