@@ -3,6 +3,7 @@
 #include "clock_settings_screen.h"
 #include "PCF85063.h"
 #include "esp_log.h"
+#include "internationalization.h"
 
 static const char *TAG_CLOCK_SETTINGS_SCREEN = "TAG_CLOCK_SETTINGS_SCREEN";
 
@@ -84,7 +85,7 @@ void clock_settings_screen_load(void) {
     
     // Título
     lv_obj_t *title = lv_label_create(scr);
-    lv_label_set_text(title, "CLOCK SETTINGS");
+    lv_label_set_text(title, get_string(STRING_CLOCK_SETTINGS));
     lv_obj_set_style_text_font(title, &lv_font_montserrat_16, 0);
     lv_obj_set_style_text_color(title, lv_color_black(), LV_PART_MAIN);
     lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 10);
@@ -98,7 +99,7 @@ void clock_settings_screen_load(void) {
     
     // Área para os controles de tempo
     lv_obj_t *time_label = lv_label_create(scr);
-    lv_label_set_text(time_label, "Hora:");
+    lv_label_set_text(time_label, get_string(STRING_TIME));
     lv_obj_set_style_text_font(time_label, &lv_font_montserrat_14, 0);
     lv_obj_set_style_text_color(time_label, lv_color_black(), LV_PART_MAIN);
     lv_obj_align(time_label, LV_ALIGN_TOP_LEFT, 10, 60);
@@ -133,7 +134,7 @@ void clock_settings_screen_load(void) {
     
     // Área para os controles de data
     lv_obj_t *date_label = lv_label_create(scr);
-    lv_label_set_text(date_label, "Data:");
+    lv_label_set_text(date_label, get_string(STRING_DATE));
     lv_obj_set_style_text_font(date_label, &lv_font_montserrat_14, 0);
     lv_obj_set_style_text_color(date_label, lv_color_black(), LV_PART_MAIN);
     lv_obj_align(date_label, LV_ALIGN_TOP_LEFT, 10, 180);

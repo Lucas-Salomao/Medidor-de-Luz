@@ -31,7 +31,13 @@ static const char* strings_en[] = {
     "Connect",
     "Scanning...",
     "No Wi-Fi networks detected",
-    "Language:"
+    "Language:",
+    "Zeroing",
+    "Measuring",
+    "Error zeroing!",
+    "Read Error!",
+    "Time:",
+    "Date:"
 };
 
 static const char* strings_es[] = {
@@ -62,7 +68,13 @@ static const char* strings_es[] = {
     "Conectar",
     "Buscando...",
     "No se detectaron redes Wi-Fi",
-    "Idioma:"
+    "Idioma:",
+    "Calibrando",
+    "Midiendo",
+    "¡Error al calibrar!",
+    "¡Error de lectura!",
+    "Hora:",
+    "Fecha:"
 };
 
 // Adicionada a lista de strings para Português (BR)
@@ -94,7 +106,13 @@ static const char* strings_pt_br[] = {
     "Conectar",
     "Buscando...",
     "Nenhuma rede Wi-Fi detectada",
-    "Idioma:"
+    "Idioma:",
+    "Zerando",
+    "Medindo",
+    "Erro ao zerar!",
+    "Erro de leitura!",
+    "Hora:",
+    "Data:"
 };
 
 

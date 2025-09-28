@@ -4,6 +4,7 @@
 #include "esp_log.h"
 #include "Screens.h"
 #include "PCM5101.h"
+#include "internationalization.h"
 
 static lv_obj_t *wifi_screen = NULL;
 static lv_obj_t *ssid_dropdown = NULL;
@@ -30,7 +31,7 @@ void wifi_settings_screen_init(void) {
         
         // Title
         lv_obj_t *title = lv_label_create(wifi_screen);
-        lv_label_set_text(title, "WI-FI SETTINGS");
+        lv_label_set_text(title, get_string(STRING_WIFI_SETTINGS));
         lv_obj_set_style_text_font(title, &lv_font_montserrat_16, 0);
         lv_obj_set_style_text_color(title, lv_color_black(), LV_PART_MAIN);
         lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 10);
@@ -46,7 +47,7 @@ void wifi_settings_screen_init(void) {
         
         // SSID Label
         lv_obj_t *ssid_label = lv_label_create(wifi_screen);
-        lv_label_set_text(ssid_label, "Network (SSID):");
+        lv_label_set_text(ssid_label, get_string(STRING_NETWORK_SSID));
         lv_obj_set_style_text_color(ssid_label, lv_color_black(), LV_PART_MAIN);
         lv_obj_align(ssid_label, LV_ALIGN_TOP_LEFT, 20, 60);
         
@@ -66,7 +67,7 @@ void wifi_settings_screen_init(void) {
         
         // Password Label
         lv_obj_t *pwd_label = lv_label_create(wifi_screen);
-        lv_label_set_text(pwd_label, "Password:");
+        lv_label_set_text(pwd_label, get_string(STRING_PASSWORD));
         lv_obj_set_style_text_color(pwd_label, lv_color_black(), LV_PART_MAIN);
         lv_obj_align(pwd_label, LV_ALIGN_TOP_LEFT, 20, 130);
         
@@ -85,7 +86,7 @@ void wifi_settings_screen_init(void) {
         lv_obj_add_event_cb(connect_btn, connect_btn_event_handler, LV_EVENT_CLICKED, NULL);
         
         lv_obj_t *connect_label = lv_label_create(connect_btn);
-        lv_label_set_text(connect_label, "Connect");
+        lv_label_set_text(connect_label, get_string(STRING_CONNECT));
         lv_obj_center(connect_label);
         
         // Status label (for connection status/error messages)
@@ -105,7 +106,7 @@ void wifi_settings_screen_init(void) {
         lv_obj_add_event_cb(keyboard, keyboard_close_handler, LV_EVENT_READY, NULL);
         
         // Populate dropdown with dummy values initially
-        lv_dropdown_set_options(ssid_dropdown, "Scanning...");
+        lv_dropdown_set_options(ssid_dropdown, get_string(STRING_SCANNING));
     }
 }
 
@@ -129,7 +130,7 @@ static void connect_btn_event_handler(lv_event_t *e) {
     ESP_LOGI(TAG, "Connect button clicked");
 
     // Exibe mensagem de tentativa de conexão
-    lv_label_set_text(status_label, "Connecting...");
+    lv_label_set_text(status_label, get_string(STRING_CONNECTING));
     lv_obj_set_style_text_color(status_label, lv_color_make(0, 0, 255), LV_PART_MAIN); // Azul para indicar progresso
     
     char selected_ssid[64];
@@ -153,11 +154,11 @@ static void connect_btn_event_handler(lv_event_t *e) {
     bool connected = WIFI_Connect(selected_ssid, password);
 
     if (connected) {
-        lv_label_set_text(status_label, "Connected successfully!");
+        lv_label_set_text(status_label, get_string(STRING_CONNECTED_SUCCESSFULLY));
         lv_obj_set_style_text_color(status_label, lv_color_make(0, 128, 0), LV_PART_MAIN); // Verde
         Play_Music("/sdcard", "wifi_connected.mp3");
     } else {
-        lv_label_set_text(status_label, "Connection failed. Please try again.");
+        lv_label_set_text(status_label, get_string(STRING_CONNECTION_FAILED));
         lv_obj_set_style_text_color(status_label, lv_color_make(255, 0, 0), LV_PART_MAIN); // Vermelho
         Play_Music("/sdcard", "wifi_error.mp3");
     }
@@ -167,8 +168,8 @@ static void refresh_btn_event_handler(lv_event_t *e) {
     ESP_LOGI(TAG, "Refresh button clicked");
     
     // Show scanning message
-    lv_dropdown_set_options(ssid_dropdown, "Scanning...");
-    lv_label_set_text(status_label, "Scanning for networks...");
+    lv_dropdown_set_options(ssid_dropdown, get_string(STRING_SCANNING));
+    lv_label_set_text(status_label, get_string(STRING_SCANNING_FOR_NETWORKS));
     lv_obj_set_style_text_color(status_label, lv_color_black(), LV_PART_MAIN);
     
     // Start Wi-Fi scan in a separate task
@@ -200,8 +201,8 @@ static void populate_wifi_dropdown(void *data) {
 
     // Verifica se foram encontradas redes
     if (WIFI_NUM == 0) {
-        lv_dropdown_set_options(ssid_dropdown, "No networks found");
-        lv_label_set_text(status_label, "No Wi-Fi networks detected");
+        lv_dropdown_set_options(ssid_dropdown, get_string(STRING_NO_NETWORKS_FOUND));
+        lv_label_set_text(status_label, get_string(STRING_NO_NETWORKS_DETECTED));
         return;
     }
 
@@ -209,7 +210,7 @@ static void populate_wifi_dropdown(void *data) {
     char *buffer = malloc(WIFI_NUM * 34 + 1); // 33 chars por SSID + \n
     if (buffer == NULL) {
         ESP_LOGE(TAG, "Failed to allocate memory for dropdown options");
-        lv_label_set_text(status_label, "Memory error");
+        lv_label_set_text(status_label, get_string(STRING_MEMORY_ERROR));
         return;
     }
 

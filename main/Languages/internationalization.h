@@ -38,6 +38,12 @@ typedef enum {
     STRING_SCANNING,
     STRING_NO_NETWORKS_DETECTED,
     STRING_LANGUAGE,
+    STRING_ZEROING,
+    STRING_MEASURING,
+    STRING_ERROR_ZEROING,
+    STRING_READ_ERROR,
+    STRING_TIME,
+    STRING_DATE,
     // Adicione mais IDs de string aqui conforme necessário
 } string_id_t;
 

@@ -2,6 +2,8 @@
 #include <sys/stat.h>
 #include "lvgl.h"
 #include "Screens.h"
+#include "fluorimeter_screen.h"
+#include "internationalization.h"
 #include "esp_log.h"
 #include "PCF85063.h"
 #include "VEML7700.h"
@@ -136,7 +138,7 @@ static void update_ui_for_state(screen_state_t new_state) {
 
     switch (current_state) {
         case STATE_ZEROING_PROMPT:
-            lv_label_set_text(instruction_label, "Place the blank for zeroing");
+            lv_label_set_text(instruction_label, get_string(STRING_ZEROING_PROMPT));
             lv_label_set_text(value_label, "Lux: --");
             lv_obj_clear_flag(zero_btn, LV_OBJ_FLAG_HIDDEN);
             if (play_audio) {
@@ -145,14 +147,14 @@ static void update_ui_for_state(screen_state_t new_state) {
             break;
 
         case STATE_MEASURE_PROMPT:
-            lv_label_set_text(instruction_label, "Insert the sample");
+            lv_label_set_text(instruction_label, get_string(STRING_MEASURE_PROMPT));
             lv_label_set_text(value_label, "Lux: 0.00");
             lv_obj_clear_flag(measure_btn, LV_OBJ_FLAG_HIDDEN);
             Play_Music("/sdcard", AUDIO_MEASURE_PROMPT);
             break;
 
         case STATE_SHOW_RESULT:
-            lv_label_set_text(instruction_label, "Measurement completed");
+            lv_label_set_text(instruction_label, get_string(STRING_SHOW_RESULT));
             lv_obj_clear_flag(save_btn, LV_OBJ_FLAG_HIDDEN);
             lv_obj_clear_flag(repeat_btn, LV_OBJ_FLAG_HIDDEN);
             Play_Music("/sdcard", AUDIO_RESULT_PROMPT);
@@ -179,7 +181,7 @@ static void create_id_modal(lv_obj_t *parent) {
 
     // Rótulo de instrução
     lv_obj_t *label = lv_label_create(id_modal_cont);
-    lv_label_set_text(label, "Enter Sample ID:");
+    lv_label_set_text(label, get_string(STRING_ENTER_SAMPLE_ID));
     lv_obj_align(label, LV_ALIGN_TOP_LEFT, 10, 10);
 
     // Área de texto para o ID
@@ -187,7 +189,7 @@ static void create_id_modal(lv_obj_t *parent) {
     lv_obj_set_size(id_input_textarea, 200, 40);
     lv_obj_align(id_input_textarea, LV_ALIGN_TOP_LEFT, 10, 35);
     lv_textarea_set_one_line(id_input_textarea, true);
-    lv_textarea_set_placeholder_text(id_input_textarea, "ID...");
+    lv_textarea_set_placeholder_text(id_input_textarea, get_string(STRING_ID));
 
     // Teclado
     keyboard = lv_keyboard_create(id_modal_bg); // Anexado ao fundo para posicionamento global
@@ -203,7 +205,7 @@ static void id_kb_confirm_event_handler(lv_event_t *e) {
     const char *sample_id = lv_textarea_get_text(id_input_textarea);
     
     if (sample_id == NULL || strlen(sample_id) == 0) {
-        lv_label_set_text(instruction_label, "ID cannot be empty!");
+        lv_label_set_text(instruction_label, get_string(STRING_ID_CANNOT_BE_EMPTY));
         lv_obj_set_style_text_color(instruction_label, lv_color_hex(0xFF0000), 0);
         // O modal não fecha, o usuário deve corrigir
         return;
@@ -214,7 +216,7 @@ static void id_kb_confirm_event_handler(lv_event_t *e) {
     FILE* f = fopen("/sdcard/measurements.csv", "a+");
     if (f == NULL) {
         ESP_LOGE(TAG_MAIN_SCREEN, "Failed to open measurements.csv for appending.");
-        lv_label_set_text(instruction_label, "SD Card Error!");
+        lv_label_set_text(instruction_label, get_string(STRING_SD_CARD_ERROR));
         lv_obj_set_style_text_color(instruction_label, lv_color_hex(0xFF0000), 0);
     } else {
         fseek(f, 0, SEEK_END);
@@ -228,7 +230,7 @@ static void id_kb_confirm_event_handler(lv_event_t *e) {
         fprintf(f, "\"%s\",%.2f,\"%s\"\n", sample_id, last_measurement, datetime_str);
         fclose(f);
         ESP_LOGI(TAG_MAIN_SCREEN, "Data saved to CSV.");
-        lv_label_set_text(instruction_label, "Saved!");
+        lv_label_set_text(instruction_label, get_string(STRING_SAVED));
         lv_obj_set_style_text_color(instruction_label, lv_color_hex(0x008000), 0);
         Play_Music("/sdcard", "save_success.mp3");
     }
@@ -299,7 +301,7 @@ static esp_err_t perform_measurement_sampling(float *final_avg_lux, const char* 
 // Tarefa para zerar o sensor
 static void zero_sensor_task(void *pvParameters) {
     float avg_lux;
-    if (perform_measurement_sampling(&avg_lux, "Zeroing") == ESP_OK) {
+    if (perform_measurement_sampling(&avg_lux, get_string(STRING_ZEROING)) == ESP_OK) {
         lux_offset = avg_lux;
         ESP_LOGI(TAG_MAIN_SCREEN, "Zeroing complete. Offset: %.2f lux", lux_offset);
         lv_async_call(async_set_ui_state, (void*)STATE_MEASURE_PROMPT);
@@ -308,7 +310,7 @@ static void zero_sensor_task(void *pvParameters) {
         async_label_data_t *err_data = malloc(sizeof(async_label_data_t));
         if(err_data){
             err_data->label = value_label;
-            strcpy(err_data->text, "Error zeroing!");
+            strcpy(err_data->text, get_string(STRING_ERROR_ZEROING));
             lv_async_call(async_update_label_cb, err_data);
         }
         vTaskDelay(pdMS_TO_TICKS(2000));
@@ -319,7 +321,7 @@ static void zero_sensor_task(void *pvParameters) {
 
 static void measure_sensor_task(void *pvParameters) {
     float avg_lux;
-    if (perform_measurement_sampling(&avg_lux, "Measuring") == ESP_OK) {
+    if (perform_measurement_sampling(&avg_lux, get_string(STRING_MEASURING)) == ESP_OK) {
         last_measurement = avg_lux - lux_offset;
         if (last_measurement< 0) last_measurement = 0.0;
 
@@ -335,7 +337,7 @@ static void measure_sensor_task(void *pvParameters) {
         async_label_data_t* err_data = malloc(sizeof(async_label_data_t));
         if(err_data){
             err_data->label = value_label;
-            strcpy(err_data->text, "Read Error!");
+            strcpy(err_data->text, get_string(STRING_READ_ERROR));
             lv_async_call(async_update_label_cb, err_data);
         }
     }
@@ -382,7 +384,7 @@ void create_main_screen(lv_obj_t *parent) {
 
     // Título
     lv_obj_t *title = lv_label_create(parent);
-    lv_label_set_text(title, "FLUORIMETER");
+    lv_label_set_text(title, get_string(STRING_FLUORIMETER));
     lv_obj_set_style_text_font(title, &lv_font_montserrat_16, 0);
     lv_obj_set_style_text_color(title, lv_color_black(), LV_PART_MAIN);
     lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 10);
@@ -414,7 +416,7 @@ void create_main_screen(lv_obj_t *parent) {
     lv_obj_align(zero_btn, LV_ALIGN_CENTER, 0, 40);
     lv_obj_add_event_cb(zero_btn, zero_btn_event_handler, LV_EVENT_CLICKED, NULL);
     lv_obj_t *label_zero = lv_label_create(zero_btn);
-    lv_label_set_text(label_zero, "Zero");
+    lv_label_set_text(label_zero, get_string(STRING_ZERO));
     lv_obj_center(label_zero);
 
     measure_btn = lv_btn_create(parent);
@@ -422,7 +424,7 @@ void create_main_screen(lv_obj_t *parent) {
     lv_obj_align(measure_btn, LV_ALIGN_CENTER, 0, 40);
     lv_obj_add_event_cb(measure_btn, measure_btn_event_handler, LV_EVENT_CLICKED, NULL);
     lv_obj_t *label_measure = lv_label_create(measure_btn);
-    lv_label_set_text(label_measure, "Measure");
+    lv_label_set_text(label_measure, get_string(STRING_MEASURE));
     lv_obj_center(label_measure);
 
     save_btn = lv_btn_create(parent);
@@ -430,7 +432,7 @@ void create_main_screen(lv_obj_t *parent) {
     lv_obj_align(save_btn, LV_ALIGN_CENTER, -60, 40);
     lv_obj_add_event_cb(save_btn, save_btn_event_handler, LV_EVENT_CLICKED, NULL);
     lv_obj_t *label_save = lv_label_create(save_btn);
-    lv_label_set_text(label_save, "Save");
+    lv_label_set_text(label_save, get_string(STRING_SAVE));
     lv_obj_center(label_save);
 
     repeat_btn = lv_btn_create(parent);
@@ -438,7 +440,7 @@ void create_main_screen(lv_obj_t *parent) {
     lv_obj_align(repeat_btn, LV_ALIGN_CENTER, 60, 40);
     lv_obj_add_event_cb(repeat_btn, repeat_btn_event_handler, LV_EVENT_CLICKED, NULL);
     lv_obj_t *label_repeat = lv_label_create(repeat_btn);
-    lv_label_set_text(label_repeat, "Repeat");
+    lv_label_set_text(label_repeat, get_string(STRING_REPEAT));
     lv_obj_center(label_repeat);
 
     // Rótulo de data e hora

@@ -23,7 +23,8 @@ idf_component_register(
                               "./TELAS/clock_settings_screen.c"
                               "./TELAS/wifi_settings_screen.c"
                               "./VEML7700/VEML7700.c"
-                              # "./TSL2561/TSL2561.c"	
+                              # "./TSL2561/TSL2561.c"
+                              "./Languages/internationalization.c"
 
                          INCLUDE_DIRS 
                               "./Audio_Driver" 
@@ -44,5 +45,6 @@ idf_component_register(
                               "./Fonts"
                               "./VEML7700"
                               # "./TSL2561"
+                              "./Languages"
                               "."
                        )
