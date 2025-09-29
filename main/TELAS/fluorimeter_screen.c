@@ -136,13 +136,18 @@ static void update_ui_for_state(screen_state_t new_state) {
 
     bool play_audio = !is_first_load;
 
+    // Get language path for audio
+    const char* lang_code = get_language_code();
+    char lang_dir[20];
+    snprintf(lang_dir, sizeof(lang_dir), "/sdcard/%s", lang_code);
+
     switch (current_state) {
         case STATE_ZEROING_PROMPT:
             lv_label_set_text(instruction_label, get_string(STRING_ZEROING_PROMPT));
             lv_label_set_text(value_label, "Lux: --");
             lv_obj_clear_flag(zero_btn, LV_OBJ_FLAG_HIDDEN);
             if (play_audio) {
-                Play_Music("/sdcard", AUDIO_ZERO_PROMPT);
+                Play_Music(lang_dir, AUDIO_ZERO_PROMPT);
             }
             break;
 
@@ -150,14 +155,14 @@ static void update_ui_for_state(screen_state_t new_state) {
             lv_label_set_text(instruction_label, get_string(STRING_MEASURE_PROMPT));
             lv_label_set_text(value_label, "Lux: 0.00");
             lv_obj_clear_flag(measure_btn, LV_OBJ_FLAG_HIDDEN);
-            Play_Music("/sdcard", AUDIO_MEASURE_PROMPT);
+            Play_Music(lang_dir, AUDIO_MEASURE_PROMPT);
             break;
 
         case STATE_SHOW_RESULT:
             lv_label_set_text(instruction_label, get_string(STRING_SHOW_RESULT));
             lv_obj_clear_flag(save_btn, LV_OBJ_FLAG_HIDDEN);
             lv_obj_clear_flag(repeat_btn, LV_OBJ_FLAG_HIDDEN);
-            Play_Music("/sdcard", AUDIO_RESULT_PROMPT);
+            Play_Music(lang_dir, AUDIO_RESULT_PROMPT);
             break;
     }
 }
@@ -232,7 +237,10 @@ static void id_kb_confirm_event_handler(lv_event_t *e) {
         ESP_LOGI(TAG_MAIN_SCREEN, "Data saved to CSV.");
         lv_label_set_text(instruction_label, get_string(STRING_SAVED));
         lv_obj_set_style_text_color(instruction_label, lv_color_hex(0x008000), 0);
-        Play_Music("/sdcard", "save_success.mp3");
+        const char* lang_code = get_language_code();
+        char lang_dir[20];
+        snprintf(lang_dir, sizeof(lang_dir), "/sdcard/%s", lang_code);
+        Play_Music(lang_dir, "save_success.mp3");
     }
 
     // Fecha o modal e agenda o retorno ao estado inicial

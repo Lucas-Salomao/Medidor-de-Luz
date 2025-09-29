@@ -153,14 +153,19 @@ static void connect_btn_event_handler(lv_event_t *e) {
     // Tenta conectar
     bool connected = WIFI_Connect(selected_ssid, password);
 
+    // Get language path for audio
+    const char* lang_code = get_language_code();
+    char lang_dir[20];
+    snprintf(lang_dir, sizeof(lang_dir), "/sdcard/%s", lang_code);
+
     if (connected) {
         lv_label_set_text(status_label, get_string(STRING_CONNECTED_SUCCESSFULLY));
         lv_obj_set_style_text_color(status_label, lv_color_make(0, 128, 0), LV_PART_MAIN); // Verde
-        Play_Music("/sdcard", "wifi_connected.mp3");
+        Play_Music(lang_dir, "wifi_connected.mp3");
     } else {
         lv_label_set_text(status_label, get_string(STRING_CONNECTION_FAILED));
         lv_obj_set_style_text_color(status_label, lv_color_make(255, 0, 0), LV_PART_MAIN); // Vermelho
-        Play_Music("/sdcard", "wifi_error.mp3");
+        Play_Music(lang_dir, "wifi_error.mp3");
     }
 }
 

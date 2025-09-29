@@ -3,6 +3,7 @@
 #include "settings_screen.h"
 #include "fluorimeter_screen.h"
 #include "PCM5101.h"
+#include "internationalization.h"
 
 #include "esp_log.h"
 #include "esp_wifi.h"
@@ -62,7 +63,10 @@ void splash_timer_callback(lv_timer_t *timer) {
     lv_scr_load_anim(main_screen, LV_SCR_LOAD_ANIM_FADE_ON, 500, 0, false);
     
     // Toca o primeiro áudio aqui, após a tela principal ser carregada
-    Play_Music("/sdcard", "zero_prompt.mp3");
+    const char* lang_code = get_language_code();
+    char lang_dir[20];
+    snprintf(lang_dir, sizeof(lang_dir), "/sdcard/%s", lang_code);
+    Play_Music(lang_dir, "zero_prompt.mp3");
 
     // Reseta a flag para permitir que os sons toquem normalmente a partir de agora
     if (is_first_load) {
