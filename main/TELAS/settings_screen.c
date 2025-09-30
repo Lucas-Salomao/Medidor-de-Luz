@@ -5,6 +5,7 @@
 #include "Screens.h"
 #include "esp_log.h"
 #include "internationalization.h"
+#include "Fonts/custom_fonts.h"
 
 static const char *TAG_SETTINGS_SCREEN = "TAG_SETTINGS_SCREEN";
 static lv_style_t fa_icon_style;
@@ -76,7 +77,7 @@ void create_config_screen(lv_obj_t *parent) {
 
     title_label = lv_label_create(parent); // Use static variable
     lv_label_set_text(title_label, get_string(STRING_SETTINGS)); // Internationalized
-    lv_obj_set_style_text_font(title_label, &lv_font_montserrat_16, 0);
+    lv_obj_set_style_text_font(title_label, &montserrat_pt_16, 0);
     lv_obj_set_style_text_color(title_label, lv_color_black(), LV_PART_MAIN);
     lv_obj_align(title_label, LV_ALIGN_TOP_MID, 0, 10);
 

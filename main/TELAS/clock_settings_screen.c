@@ -4,6 +4,7 @@
 #include "PCF85063.h"
 #include "esp_log.h"
 #include "internationalization.h"
+#include "Fonts/custom_fonts.h"
 
 static const char *TAG_CLOCK_SETTINGS_SCREEN = "TAG_CLOCK_SETTINGS_SCREEN";
 
@@ -86,7 +87,7 @@ void clock_settings_screen_load(void) {
     // Título
     lv_obj_t *title = lv_label_create(scr);
     lv_label_set_text(title, get_string(STRING_CLOCK_SETTINGS));
-    lv_obj_set_style_text_font(title, &lv_font_montserrat_16, 0);
+    lv_obj_set_style_text_font(title, &montserrat_pt_16, 0);
     lv_obj_set_style_text_color(title, lv_color_black(), LV_PART_MAIN);
     lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 10);
 
@@ -100,7 +101,7 @@ void clock_settings_screen_load(void) {
     // Área para os controles de tempo
     lv_obj_t *time_label = lv_label_create(scr);
     lv_label_set_text(time_label, get_string(STRING_TIME));
-    lv_obj_set_style_text_font(time_label, &lv_font_montserrat_14, 0);
+    lv_obj_set_style_text_font(time_label, &montserrat_pt_14, 0);
     lv_obj_set_style_text_color(time_label, lv_color_black(), LV_PART_MAIN);
     lv_obj_align(time_label, LV_ALIGN_TOP_LEFT, 10, 60);
     
@@ -116,7 +117,7 @@ void clock_settings_screen_load(void) {
     
     lv_obj_t *time_sep = lv_label_create(time_container);
     lv_label_set_text(time_sep, ":");
-    lv_obj_set_style_text_font(time_sep, &lv_font_montserrat_14, 0);
+    lv_obj_set_style_text_font(time_sep, &montserrat_pt_14, 0);
     lv_obj_set_style_text_color(time_sep, lv_color_black(), LV_PART_MAIN);
     lv_obj_align(time_sep, LV_ALIGN_CENTER, 0, 0);
     
@@ -135,7 +136,7 @@ void clock_settings_screen_load(void) {
     // Área para os controles de data
     lv_obj_t *date_label = lv_label_create(scr);
     lv_label_set_text(date_label, get_string(STRING_DATE));
-    lv_obj_set_style_text_font(date_label, &lv_font_montserrat_14, 0);
+    lv_obj_set_style_text_font(date_label, &montserrat_pt_14, 0);
     lv_obj_set_style_text_color(date_label, lv_color_black(), LV_PART_MAIN);
     lv_obj_align(date_label, LV_ALIGN_TOP_LEFT, 10, 180);
 
@@ -158,7 +159,7 @@ void clock_settings_screen_load(void) {
     
     lv_obj_t *date_sep1 = lv_label_create(date_container);
     lv_label_set_text(date_sep1, "/");
-    lv_obj_set_style_text_font(date_sep1, &lv_font_montserrat_14, 0);
+    lv_obj_set_style_text_font(date_sep1, &montserrat_pt_14, 0);
     lv_obj_set_style_text_color(date_sep1, lv_color_black(), LV_PART_MAIN);
     lv_obj_align(date_sep1, LV_ALIGN_CENTER, -40, 0);
     
@@ -171,7 +172,7 @@ void clock_settings_screen_load(void) {
     
     lv_obj_t *date_sep2 = lv_label_create(date_container);
     lv_label_set_text(date_sep2, "/");
-    lv_obj_set_style_text_font(date_sep2, &lv_font_montserrat_14, 0);
+    lv_obj_set_style_text_font(date_sep2, &montserrat_pt_14, 0);
     lv_obj_set_style_text_color(date_sep2, lv_color_black(), LV_PART_MAIN);
     lv_obj_align(date_sep2, LV_ALIGN_CENTER, 40, 0);
     

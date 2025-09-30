@@ -4,6 +4,7 @@
 #include "Screens.h"
 #include "fluorimeter_screen.h"
 #include "internationalization.h"
+#include "Fonts/custom_fonts.h"
 #include "esp_log.h"
 #include "PCF85063.h"
 #include "VEML7700.h"
@@ -393,7 +394,7 @@ void create_main_screen(lv_obj_t *parent) {
     // Título
     lv_obj_t *title = lv_label_create(parent);
     lv_label_set_text(title, get_string(STRING_FLUORIMETER));
-    lv_obj_set_style_text_font(title, &lv_font_montserrat_16, 0);
+    lv_obj_set_style_text_font(title, &montserrat_pt_16, 0);
     lv_obj_set_style_text_color(title, lv_color_black(), LV_PART_MAIN);
     lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 10);
 
@@ -416,7 +417,7 @@ void create_main_screen(lv_obj_t *parent) {
     // Rótulo para valor do sensor
     value_label = lv_label_create(parent);
     lv_obj_align(value_label, LV_ALIGN_CENTER, 0, -20);
-    lv_obj_set_style_text_font(value_label, &lv_font_montserrat_16, 0);
+    lv_obj_set_style_text_font(value_label, &montserrat_pt_16, 0);
 
     // Botões de Ação
     zero_btn = lv_btn_create(parent);
@@ -453,7 +454,7 @@ void create_main_screen(lv_obj_t *parent) {
 
     // Rótulo de data e hora
     datetime_label = lv_label_create(parent);
-    lv_obj_set_style_text_font(datetime_label, &lv_font_montserrat_12, 0);
+    lv_obj_set_style_text_font(datetime_label, &montserrat_pt_12, 0);
     lv_obj_set_style_text_color(datetime_label, lv_color_black(), LV_PART_MAIN);
     lv_obj_align(datetime_label, LV_ALIGN_BOTTOM_MID, 0, -5);
 

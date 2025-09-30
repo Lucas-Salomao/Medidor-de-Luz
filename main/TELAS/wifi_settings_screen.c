@@ -5,6 +5,7 @@
 #include "Screens.h"
 #include "PCM5101.h"
 #include "internationalization.h"
+#include "Fonts/custom_fonts.h"
 
 static lv_obj_t *wifi_screen = NULL;
 static lv_obj_t *ssid_dropdown = NULL;
@@ -32,7 +33,7 @@ void wifi_settings_screen_init(void) {
         // Title
         lv_obj_t *title = lv_label_create(wifi_screen);
         lv_label_set_text(title, get_string(STRING_WIFI_SETTINGS));
-        lv_obj_set_style_text_font(title, &lv_font_montserrat_16, 0);
+        lv_obj_set_style_text_font(title, &montserrat_pt_16, 0);
         lv_obj_set_style_text_color(title, lv_color_black(), LV_PART_MAIN);
         lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 10);
         
