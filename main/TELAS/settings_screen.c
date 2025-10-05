@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "lvgl.h"
 #include "clock_settings_screen.h"
 #include "wifi_settings_screen.h"
