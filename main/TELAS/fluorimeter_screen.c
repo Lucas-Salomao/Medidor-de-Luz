@@ -145,7 +145,7 @@ static void update_ui_for_state(screen_state_t new_state) {
     switch (current_state) {
         case STATE_ZEROING_PROMPT:
             lv_label_set_text(instruction_label, get_string(STRING_ZEROING_PROMPT));
-            lv_label_set_text(value_label, "Lux: --");
+            lv_label_set_text_fmt(value_label, "%s--", get_string(STRING_LUX_PREFIX));
             lv_obj_clear_flag(zero_btn, LV_OBJ_FLAG_HIDDEN);
             if (play_audio) {
                 Play_Music(lang_dir, AUDIO_ZERO_PROMPT);
@@ -154,7 +154,7 @@ static void update_ui_for_state(screen_state_t new_state) {
 
         case STATE_MEASURE_PROMPT:
             lv_label_set_text(instruction_label, get_string(STRING_MEASURE_PROMPT));
-            lv_label_set_text(value_label, "Lux: 0.00");
+            lv_label_set_text_fmt(value_label, "%s0.00", get_string(STRING_LUX_PREFIX));
             lv_obj_clear_flag(measure_btn, LV_OBJ_FLAG_HIDDEN);
             Play_Music(lang_dir, AUDIO_MEASURE_PROMPT);
             break;
@@ -228,7 +228,7 @@ static void id_kb_confirm_event_handler(lv_event_t *e) {
         fseek(f, 0, SEEK_END);
         long size = ftell(f);
         if (size == 0) {
-            fprintf(f, "SampleID,Measurement,Time\n");
+            fprintf(f, "%s\n", get_string(STRING_CSV_HEADER));
             ESP_LOGI(TAG_MAIN_SCREEN, "CSV header written.");
         }
 
@@ -337,7 +337,7 @@ static void measure_sensor_task(void *pvParameters) {
         async_label_data_t* res_data = malloc(sizeof(async_label_data_t));
         if(res_data){
             res_data->label = value_label;
-            snprintf(res_data->text, sizeof(res_data->text), "Lux: %.2f", last_measurement);
+            snprintf(res_data->text, sizeof(res_data->text), "%s%.2f", get_string(STRING_LUX_PREFIX), last_measurement);
             lv_async_call(async_update_label_cb, res_data);
         }
         

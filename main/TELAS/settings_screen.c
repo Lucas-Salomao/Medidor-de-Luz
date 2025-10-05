@@ -124,7 +124,12 @@ void create_config_screen(lv_obj_t *parent) {
 
     // Language Dropdown
     lv_obj_t *language_dropdown = lv_dropdown_create(parent);
-    lv_dropdown_set_options(language_dropdown, "Português\nEnglish\nEspañol");
+    char lang_options[100];
+    snprintf(lang_options, sizeof(lang_options), "%s\n%s\n%s",
+             get_string(STRING_LANG_PORTUGUESE),
+             get_string(STRING_LANG_ENGLISH),
+             get_string(STRING_LANG_SPANISH));
+    lv_dropdown_set_options(language_dropdown, lang_options);
     lv_obj_align(language_dropdown, LV_ALIGN_CENTER, 60, 60);
     lv_obj_add_event_cb(language_dropdown, settings_language_dropdown_event_handler, LV_EVENT_VALUE_CHANGED, NULL);
 

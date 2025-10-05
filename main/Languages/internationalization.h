@@ -44,6 +44,11 @@ typedef enum {
     STRING_READ_ERROR,
     STRING_TIME,
     STRING_DATE,
+    STRING_LUX_PREFIX,
+    STRING_CSV_HEADER,
+    STRING_LANG_PORTUGUESE,
+    STRING_LANG_ENGLISH,
+    STRING_LANG_SPANISH,
     // Adicione mais IDs de string aqui conforme necessário
 } string_id_t;
 

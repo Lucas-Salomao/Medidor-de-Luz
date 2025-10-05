@@ -37,7 +37,12 @@ static const char* strings_en[] = {
     "Error zeroing!",
     "Read Error!",
     "Time:",
-    "Date:"
+    "Date:",
+    "Lux: ",
+    "SampleID,Measurement,Time",
+    "Portuguese",
+    "English",
+    "Spanish"
 };
 
 static const char* strings_es[] = {
@@ -74,7 +79,12 @@ static const char* strings_es[] = {
     "¡Error al calibrar!",
     "¡Error de lectura!",
     "Hora:",
-    "Fecha:"
+    "Fecha:",
+    "Lux: ",
+    "IDMuestra,Medicion,Tiempo",
+    "Portugués",
+    "Inglés",
+    "Español"
 };
 
 // Adicionada a lista de strings para Português (BR)
@@ -112,7 +122,12 @@ static const char* strings_pt_br[] = {
     "Erro ao zerar!",
     "Erro de leitura!",
     "Hora:",
-    "Data:"
+    "Data:",
+    "Lux: ",
+    "ID_Amostra,Medicao,Hora",
+    "Português",
+    "Inglês",
+    "Espanhol"
 };
 
 
