@@ -34,6 +34,7 @@ typedef enum {
 
 // Variáveis de estado e componentes da UI
 static screen_state_t current_state;
+static lv_obj_t *title_label = NULL;
 static lv_obj_t *datetime_label = NULL;
 static lv_obj_t *instruction_label = NULL;
 static lv_obj_t *value_label = NULL;
@@ -41,6 +42,10 @@ static lv_obj_t *zero_btn = NULL;
 static lv_obj_t *measure_btn = NULL;
 static lv_obj_t *save_btn = NULL;
 static lv_obj_t *repeat_btn = NULL;
+static lv_obj_t *label_zero = NULL;
+static lv_obj_t *label_measure = NULL;
+static lv_obj_t *label_save = NULL;
+static lv_obj_t *label_repeat = NULL;
 
 // --- Componentes do Modal de ID ---
 static lv_obj_t *id_modal_bg = NULL;    // Fundo semitransparente do modal
@@ -121,6 +126,17 @@ void config_btn_event_handler(lv_event_t *e) {
         return;
     }
     lv_scr_load_anim(config_screen, LV_SCR_LOAD_ANIM_FADE_ON, 500, 0, false);
+}
+
+void fluorimeter_screen_update_texts(void) {
+    lv_label_set_text(title_label, get_string(STRING_FLUORIMETER));
+    lv_label_set_text(label_zero, get_string(STRING_ZERO));
+    lv_label_set_text(label_measure, get_string(STRING_MEASURE));
+    lv_label_set_text(label_save, get_string(STRING_SAVE));
+    lv_label_set_text(label_repeat, get_string(STRING_REPEAT));
+
+    // Re-apply state-dependent text
+    update_ui_for_state(current_state);
 }
 
 // Gerencia a visibilidade dos objetos da UI com base no estado
@@ -392,11 +408,11 @@ void create_main_screen(lv_obj_t *parent) {
     gpio_set_level(LED_PIN, 0);
 
     // Título
-    lv_obj_t *title = lv_label_create(parent);
-    lv_label_set_text(title, get_string(STRING_FLUORIMETER));
-    lv_obj_set_style_text_font(title, &montserrat_pt_16, 0);
-    lv_obj_set_style_text_color(title, lv_color_black(), LV_PART_MAIN);
-    lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 10);
+    title_label = lv_label_create(parent);
+    lv_label_set_text(title_label, get_string(STRING_FLUORIMETER));
+    lv_obj_set_style_text_font(title_label, &montserrat_pt_16, 0);
+    lv_obj_set_style_text_color(title_label, lv_color_black(), LV_PART_MAIN);
+    lv_obj_align(title_label, LV_ALIGN_TOP_MID, 0, 10);
 
     // Botão de Configurações
     lv_obj_t *config_btn = lv_btn_create(parent);
@@ -424,7 +440,7 @@ void create_main_screen(lv_obj_t *parent) {
     lv_obj_set_size(zero_btn, 120, 50);
     lv_obj_align(zero_btn, LV_ALIGN_CENTER, 0, 40);
     lv_obj_add_event_cb(zero_btn, zero_btn_event_handler, LV_EVENT_CLICKED, NULL);
-    lv_obj_t *label_zero = lv_label_create(zero_btn);
+    label_zero = lv_label_create(zero_btn);
     lv_label_set_text(label_zero, get_string(STRING_ZERO));
     lv_obj_center(label_zero);
 
@@ -432,7 +448,7 @@ void create_main_screen(lv_obj_t *parent) {
     lv_obj_set_size(measure_btn, 120, 50);
     lv_obj_align(measure_btn, LV_ALIGN_CENTER, 0, 40);
     lv_obj_add_event_cb(measure_btn, measure_btn_event_handler, LV_EVENT_CLICKED, NULL);
-    lv_obj_t *label_measure = lv_label_create(measure_btn);
+    label_measure = lv_label_create(measure_btn);
     lv_label_set_text(label_measure, get_string(STRING_MEASURE));
     lv_obj_center(label_measure);
 
@@ -440,7 +456,7 @@ void create_main_screen(lv_obj_t *parent) {
     lv_obj_set_size(save_btn, 100, 50);
     lv_obj_align(save_btn, LV_ALIGN_CENTER, -60, 40);
     lv_obj_add_event_cb(save_btn, save_btn_event_handler, LV_EVENT_CLICKED, NULL);
-    lv_obj_t *label_save = lv_label_create(save_btn);
+    label_save = lv_label_create(save_btn);
     lv_label_set_text(label_save, get_string(STRING_SAVE));
     lv_obj_center(label_save);
 
@@ -448,7 +464,7 @@ void create_main_screen(lv_obj_t *parent) {
     lv_obj_set_size(repeat_btn, 100, 50);
     lv_obj_align(repeat_btn, LV_ALIGN_CENTER, 60, 40);
     lv_obj_add_event_cb(repeat_btn, repeat_btn_event_handler, LV_EVENT_CLICKED, NULL);
-    lv_obj_t *label_repeat = lv_label_create(repeat_btn);
+    label_repeat = lv_label_create(repeat_btn);
     lv_label_set_text(label_repeat, get_string(STRING_REPEAT));
     lv_obj_center(label_repeat);
 

@@ -8,5 +8,6 @@
 static void scan_wifi_task(void *pvParameters);
 void wifi_settings_screen_load(void);
 void wifi_settings_screen_init(void);
+void wifi_settings_screen_update_texts(void);
 
 #endif /* WIFI_SETTINGS_SCREEN_H */

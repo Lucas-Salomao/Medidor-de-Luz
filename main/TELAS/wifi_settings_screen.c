@@ -8,6 +8,10 @@
 #include "Fonts/custom_fonts.h"
 
 static lv_obj_t *wifi_screen = NULL;
+static lv_obj_t *title_label = NULL;
+static lv_obj_t *ssid_label = NULL;
+static lv_obj_t *pwd_label = NULL;
+static lv_obj_t *connect_label = NULL;
 static lv_obj_t *ssid_dropdown = NULL;
 static lv_obj_t *password_input = NULL;
 static lv_obj_t *status_label = NULL;
@@ -22,6 +26,14 @@ static void password_input_event_handler(lv_event_t *e);
 static void screen_click_event_handler(lv_event_t *e);
 static void keyboard_close_handler(lv_event_t *e);  
 
+void wifi_settings_screen_update_texts(void) {
+    if (title_label) lv_label_set_text(title_label, get_string(STRING_WIFI_SETTINGS));
+    if (ssid_label) lv_label_set_text(ssid_label, get_string(STRING_NETWORK_SSID));
+    if (pwd_label) lv_label_set_text(pwd_label, get_string(STRING_PASSWORD));
+    if (connect_label) lv_label_set_text(connect_label, get_string(STRING_CONNECT));
+    // The status label is dynamic and updated elsewhere
+}
+
 void wifi_settings_screen_init(void) {
     if (wifi_screen == NULL) {
         wifi_screen = lv_obj_create(NULL);
@@ -31,11 +43,11 @@ void wifi_settings_screen_init(void) {
         lv_obj_add_event_cb(wifi_screen, screen_click_event_handler, LV_EVENT_CLICKED, NULL);
         
         // Title
-        lv_obj_t *title = lv_label_create(wifi_screen);
-        lv_label_set_text(title, get_string(STRING_WIFI_SETTINGS));
-        lv_obj_set_style_text_font(title, &montserrat_pt_16, 0);
-        lv_obj_set_style_text_color(title, lv_color_black(), LV_PART_MAIN);
-        lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 10);
+        title_label = lv_label_create(wifi_screen);
+        lv_label_set_text(title_label, get_string(STRING_WIFI_SETTINGS));
+        lv_obj_set_style_text_font(title_label, &montserrat_pt_16, 0);
+        lv_obj_set_style_text_color(title_label, lv_color_black(), LV_PART_MAIN);
+        lv_obj_align(title_label, LV_ALIGN_TOP_MID, 0, 10);
         
         // Back button
         lv_obj_t *home_btn = lv_btn_create(wifi_screen);
@@ -47,7 +59,7 @@ void wifi_settings_screen_init(void) {
         lv_obj_center(gear_icon);
         
         // SSID Label
-        lv_obj_t *ssid_label = lv_label_create(wifi_screen);
+        ssid_label = lv_label_create(wifi_screen);
         lv_label_set_text(ssid_label, get_string(STRING_NETWORK_SSID));
         lv_obj_set_style_text_color(ssid_label, lv_color_black(), LV_PART_MAIN);
         lv_obj_align(ssid_label, LV_ALIGN_TOP_LEFT, 20, 60);
@@ -67,7 +79,7 @@ void wifi_settings_screen_init(void) {
         lv_obj_center(refresh_icon);
         
         // Password Label
-        lv_obj_t *pwd_label = lv_label_create(wifi_screen);
+        pwd_label = lv_label_create(wifi_screen);
         lv_label_set_text(pwd_label, get_string(STRING_PASSWORD));
         lv_obj_set_style_text_color(pwd_label, lv_color_black(), LV_PART_MAIN);
         lv_obj_align(pwd_label, LV_ALIGN_TOP_LEFT, 20, 130);
@@ -86,7 +98,7 @@ void wifi_settings_screen_init(void) {
         lv_obj_align(connect_btn, LV_ALIGN_TOP_LEFT, 20, 210);
         lv_obj_add_event_cb(connect_btn, connect_btn_event_handler, LV_EVENT_CLICKED, NULL);
         
-        lv_obj_t *connect_label = lv_label_create(connect_btn);
+        connect_label = lv_label_create(connect_btn);
         lv_label_set_text(connect_label, get_string(STRING_CONNECT));
         lv_obj_center(connect_label);
         

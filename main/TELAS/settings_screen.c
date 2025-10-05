@@ -11,16 +11,31 @@ static const char *TAG_SETTINGS_SCREEN = "TAG_SETTINGS_SCREEN";
 static lv_style_t fa_icon_style;
 #define ICON_CLOCK "\xEF\x80\x97"
 
-// Make labels static to be accessible from the event handler
+// Make UI components static to be accessible from update functions
 static lv_obj_t *title_label;
 static lv_obj_t *clock_btn_label;
 static lv_obj_t *wifi_btn_label;
 static lv_obj_t *language_label;
+static lv_obj_t *language_dropdown;
 
 void make_styles(void) {
     lv_style_init(&fa_icon_style);
     lv_style_set_text_font(&fa_icon_style, &font_awesome_icons);
     lv_style_set_text_color(&fa_icon_style, lv_color_white());
+}
+
+void settings_screen_update_texts(void) {
+    lv_label_set_text(title_label, get_string(STRING_SETTINGS));
+    lv_label_set_text(clock_btn_label, get_string(STRING_CLOCK_SETTINGS));
+    lv_label_set_text(wifi_btn_label, get_string(STRING_WIFI_SETTINGS));
+    lv_label_set_text(language_label, get_string(STRING_LANGUAGE));
+
+    char lang_options[100];
+    snprintf(lang_options, sizeof(lang_options), "%s\n%s\n%s",
+             get_string(STRING_LANG_PORTUGUESE),
+             get_string(STRING_LANG_ENGLISH),
+             get_string(STRING_LANG_SPANISH));
+    lv_dropdown_set_options(language_dropdown, lang_options);
 }
 
 // Event handler for the language dropdown
@@ -38,12 +53,7 @@ void settings_language_dropdown_event_handler(lv_event_t *e) {
     }
 
     if (selected_lang != get_language()) {
-        set_language(selected_lang);
-        // Update texts on the current screen
-        lv_label_set_text(title_label, get_string(STRING_SETTINGS));
-        lv_label_set_text(clock_btn_label, get_string(STRING_CLOCK_SETTINGS));
-        lv_label_set_text(wifi_btn_label, get_string(STRING_WIFI_SETTINGS));
-        lv_label_set_text(language_label, get_string(STRING_LANGUAGE));
+        set_language(selected_lang); // This will trigger the UI update via a central function later
     }
 }
 
@@ -123,7 +133,7 @@ void create_config_screen(lv_obj_t *parent) {
     lv_obj_align(language_label, LV_ALIGN_CENTER, -40, 60);
 
     // Language Dropdown
-    lv_obj_t *language_dropdown = lv_dropdown_create(parent);
+    language_dropdown = lv_dropdown_create(parent);
     char lang_options[100];
     snprintf(lang_options, sizeof(lang_options), "%s\n%s\n%s",
              get_string(STRING_LANG_PORTUGUESE),

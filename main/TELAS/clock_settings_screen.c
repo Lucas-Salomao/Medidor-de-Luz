@@ -9,6 +9,9 @@
 static const char *TAG_CLOCK_SETTINGS_SCREEN = "TAG_CLOCK_SETTINGS_SCREEN";
 
 // Componentes da UI
+static lv_obj_t *title_label;
+static lv_obj_t *time_label;
+static lv_obj_t *date_label;
 static lv_obj_t *hour_roller;
 static lv_obj_t *minute_roller;
 static lv_obj_t *day_roller;
@@ -16,6 +19,12 @@ static lv_obj_t *month_roller;
 static lv_obj_t *year_roller;
 static lv_obj_t *save_btn;
 static lv_obj_t *back_btn;
+
+void clock_settings_screen_update_texts(void) {
+    if (title_label) lv_label_set_text(title_label, get_string(STRING_CLOCK_SETTINGS));
+    if (time_label) lv_label_set_text(time_label, get_string(STRING_TIME));
+    if (date_label) lv_label_set_text(date_label, get_string(STRING_DATE));
+}
 
 static void back_btn_event_handler(lv_event_t *e) {
     ESP_LOGI(TAG_CLOCK_SETTINGS_SCREEN, "Botão voltar clicado na tela de configuração do relógio");
@@ -85,11 +94,11 @@ void clock_settings_screen_load(void) {
     lv_obj_set_style_bg_color(scr, lv_color_white(), LV_PART_MAIN);
     
     // Título
-    lv_obj_t *title = lv_label_create(scr);
-    lv_label_set_text(title, get_string(STRING_CLOCK_SETTINGS));
-    lv_obj_set_style_text_font(title, &montserrat_pt_16, 0);
-    lv_obj_set_style_text_color(title, lv_color_black(), LV_PART_MAIN);
-    lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 10);
+    title_label = lv_label_create(scr);
+    lv_label_set_text(title_label, get_string(STRING_CLOCK_SETTINGS));
+    lv_obj_set_style_text_font(title_label, &montserrat_pt_16, 0);
+    lv_obj_set_style_text_color(title_label, lv_color_black(), LV_PART_MAIN);
+    lv_obj_align(title_label, LV_ALIGN_TOP_MID, 0, 10);
 
     // Contêiner para controles de tempo
     lv_obj_t *time_container = lv_obj_create(scr);
@@ -99,7 +108,7 @@ void clock_settings_screen_load(void) {
     lv_obj_align(time_container, LV_ALIGN_TOP_MID, 0, 65);
     
     // Área para os controles de tempo
-    lv_obj_t *time_label = lv_label_create(scr);
+    time_label = lv_label_create(scr);
     lv_label_set_text(time_label, get_string(STRING_TIME));
     lv_obj_set_style_text_font(time_label, &montserrat_pt_14, 0);
     lv_obj_set_style_text_color(time_label, lv_color_black(), LV_PART_MAIN);
@@ -134,7 +143,7 @@ void clock_settings_screen_load(void) {
     lv_obj_align(minute_roller, LV_ALIGN_CENTER, 40, 0);
     
     // Área para os controles de data
-    lv_obj_t *date_label = lv_label_create(scr);
+    date_label = lv_label_create(scr);
     lv_label_set_text(date_label, get_string(STRING_DATE));
     lv_obj_set_style_text_font(date_label, &montserrat_pt_14, 0);
     lv_obj_set_style_text_color(date_label, lv_color_black(), LV_PART_MAIN);

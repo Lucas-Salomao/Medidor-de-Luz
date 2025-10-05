@@ -23,6 +23,13 @@ lv_obj_t *wifi_config_screen = NULL;
 lv_timer_t *splash_timer = NULL;
 lv_obj_t *lux_label = NULL;
 
+void update_all_screens_text(void) {
+    fluorimeter_screen_update_texts();
+    settings_screen_update_texts();
+    clock_settings_screen_update_texts();
+    wifi_settings_screen_update_texts();
+}
+
 void setup_ui(void) {
     // ESP_LOGI(TAG, "Inicializando UI");
 

@@ -4,6 +4,10 @@
 #define SCREENS_H
 
 #include "lvgl.h"
+#include "settings_screen.h"
+#include "fluorimeter_screen.h"
+#include "clock_settings_screen.h"
+#include "wifi_settings_screen.h"
 
 // Objetos globais
 extern const char *TAG;
@@ -17,5 +21,6 @@ extern lv_obj_t *lux_label;
 
 void setup_ui(void);
 void splash_timer_callback(lv_timer_t *timer);
+void update_all_screens_text(void);
 
 #endif

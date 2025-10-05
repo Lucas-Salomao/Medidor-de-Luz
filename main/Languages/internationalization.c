@@ -2,6 +2,7 @@
 #include "nvs_flash.h"
 #include "nvs.h"
 #include "esp_log.h"
+#include "../TELAS/Screens.h"
 
 static const char *NVS_TAG = "NVS";
 #define NVS_NAMESPACE "storage"
@@ -183,6 +184,7 @@ void initialize_language_from_nvs(void) {
 void set_language(language_t language) {
     current_language = language;
     save_language_to_nvs(language);
+    update_all_screens_text();
 }
 
 language_t get_language(void) {

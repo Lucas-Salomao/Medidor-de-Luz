@@ -7,5 +7,6 @@ extern bool is_first_load;
 
 void config_btn_event_handler(lv_event_t *e);
 void create_main_screen(lv_obj_t *parent);
+void fluorimeter_screen_update_texts(void);
 
 #endif
