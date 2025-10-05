@@ -18,7 +18,7 @@ static const char *TAG_MAIN_SCREEN = "FLUORIMETER_SCREEN";
 #define LED_PIN GPIO_NUM_15
 #define MAIN_REPETITIONS 3      // Quantas vezes o ciclo de 1s de medição se repete
 #define SAMPLING_DURATION_MS 1000 // Duração de cada ciclo de medição (1 segundo)
-#define SAMPLING_INTERVAL_MS 100  // Intervalo entre as leituras dentro de um ciclo
+#define SAMPLING_INTERVAL_MS 200  // Intervalo entre as leituras dentro de um ciclo
 
 // --- Nomes dos Arquivos de Áudio ---
 #define AUDIO_ZERO_PROMPT    "zero_prompt.mp3"
@@ -284,7 +284,7 @@ static esp_err_t perform_measurement_sampling(float *final_avg_lux, const char* 
     float total_avg_sum = 0.0f;
     int successful_repetitions = 0;
 
-    gpio_set_level(LED_PIN, 1); // Acende o LED
+    // gpio_set_level(LED_PIN, 1); // Acende o LED
 
     for (int i = 0; i < MAIN_REPETITIONS; i++) {
         // Atualiza a UI para mostrar o progresso
@@ -300,10 +300,13 @@ static esp_err_t perform_measurement_sampling(float *final_avg_lux, const char* 
 
         for (int j = 0; j < num_reads_per_cycle; j++) {
             float lux;
+            gpio_set_level(LED_PIN, 1); // Acende o LED
+            vTaskDelay(pdMS_TO_TICKS(SAMPLING_INTERVAL_MS/2));
             if (VEML7700_Read_Lux(&lux) == ESP_OK) {
                 lux_sum_single_cycle += lux;
                 successful_reads_single_cycle++;
             }
+            gpio_set_level(LED_PIN, 0); // Apaga o LED
             vTaskDelay(pdMS_TO_TICKS(SAMPLING_INTERVAL_MS));
         }
         
@@ -313,7 +316,7 @@ static esp_err_t perform_measurement_sampling(float *final_avg_lux, const char* 
         }
     }
 
-    gpio_set_level(LED_PIN, 0); // Apaga o LED
+    // gpio_set_level(LED_PIN, 0); // Apaga o LED
 
     if (successful_repetitions > 0) {
         *final_avg_lux = total_avg_sum / successful_repetitions;
