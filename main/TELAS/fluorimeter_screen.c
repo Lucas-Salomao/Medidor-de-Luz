@@ -70,7 +70,7 @@ static void save_btn_event_handler(lv_event_t *e);
 static void repeat_btn_event_handler(lv_event_t *e);
 static void zero_sensor_task(void *pvParameters);
 static void measure_sensor_task(void *pvParameters);
-static esp_err_t perform_measurement_sampling(float *final_avg_lux, const char* base_message);
+static esp_err_t perform_measurement_sampling(float *final_avg_lux, string_id_t progress_string_id);
 static void return_to_zeroing_state_cb(lv_timer_t *timer);
 
 // --- Novas declarações para o modal de ID ---
@@ -109,7 +109,15 @@ static void datetime_update_task(void *arg) {
 void update_datetime_label(void) {
     if (datetime_label == NULL) return;
     PCF85063_Read_Time(&datetime);
-    const char *weekday_str[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+    const char *weekday_str[] = {
+        get_string(STRING_WEEKDAY_SUN),
+        get_string(STRING_WEEKDAY_MON),
+        get_string(STRING_WEEKDAY_TUE),
+        get_string(STRING_WEEKDAY_WED),
+        get_string(STRING_WEEKDAY_THU),
+        get_string(STRING_WEEKDAY_FRI),
+        get_string(STRING_WEEKDAY_SAT)
+    };
     snprintf(datetime_str, sizeof(datetime_str), "%s %02d/%02d/%04d %02d:%02d:%02d",
              weekday_str[datetime.dotw], datetime.day, datetime.month, datetime.year,
              datetime.hour, datetime.minute, datetime.second);
@@ -279,7 +287,7 @@ static void id_modal_close_event_handler(lv_event_t *e) {
 
 // --- Funções de Lógica do Sensor ---
 
-static esp_err_t perform_measurement_sampling(float *final_avg_lux, const char* base_message) {
+static esp_err_t perform_measurement_sampling(float *final_avg_lux, string_id_t progress_string_id) {
     const int num_reads_per_cycle = SAMPLING_DURATION_MS / SAMPLING_INTERVAL_MS;
     float total_avg_sum = 0.0f;
     int successful_repetitions = 0;
@@ -291,7 +299,7 @@ static esp_err_t perform_measurement_sampling(float *final_avg_lux, const char* 
         async_label_data_t *progress_data = malloc(sizeof(async_label_data_t));
         if (progress_data) {
             progress_data->label = value_label;
-            snprintf(progress_data->text, sizeof(progress_data->text), "%s... (%d/%d)", base_message, i + 1, MAIN_REPETITIONS);
+            snprintf(progress_data->text, sizeof(progress_data->text), get_string(progress_string_id), i + 1, MAIN_REPETITIONS);
             lv_async_call(async_update_label_cb, progress_data);
         }
 
@@ -329,7 +337,7 @@ static esp_err_t perform_measurement_sampling(float *final_avg_lux, const char* 
 // Tarefa para zerar o sensor
 static void zero_sensor_task(void *pvParameters) {
     float avg_lux;
-    if (perform_measurement_sampling(&avg_lux, get_string(STRING_ZEROING)) == ESP_OK) {
+    if (perform_measurement_sampling(&avg_lux, STRING_ZEROING_PROGRESS) == ESP_OK) {
         lux_offset = avg_lux;
         ESP_LOGI(TAG_MAIN_SCREEN, "Zeroing complete. Offset: %.2f lux", lux_offset);
         lv_async_call(async_set_ui_state, (void*)STATE_MEASURE_PROMPT);
@@ -349,7 +357,7 @@ static void zero_sensor_task(void *pvParameters) {
 
 static void measure_sensor_task(void *pvParameters) {
     float avg_lux;
-    if (perform_measurement_sampling(&avg_lux, get_string(STRING_MEASURING)) == ESP_OK) {
+    if (perform_measurement_sampling(&avg_lux, STRING_MEASURING_PROGRESS) == ESP_OK) {
         last_measurement = avg_lux - lux_offset;
         if (last_measurement< 0) last_measurement = 0.0;
 

@@ -125,7 +125,7 @@ void clock_settings_screen_load(void) {
     lv_obj_align(hour_roller, LV_ALIGN_CENTER, -40, 0);
     
     lv_obj_t *time_sep = lv_label_create(time_container);
-    lv_label_set_text(time_sep, ":");
+    lv_label_set_text(time_sep, get_string(STRING_TIME_SEPARATOR));
     lv_obj_set_style_text_font(time_sep, &montserrat_pt_14, 0);
     lv_obj_set_style_text_color(time_sep, lv_color_black(), LV_PART_MAIN);
     lv_obj_align(time_sep, LV_ALIGN_CENTER, 0, 0);
@@ -167,7 +167,7 @@ void clock_settings_screen_load(void) {
     lv_obj_align(day_roller, LV_ALIGN_CENTER, -80, 0);
     
     lv_obj_t *date_sep1 = lv_label_create(date_container);
-    lv_label_set_text(date_sep1, "/");
+    lv_label_set_text(date_sep1, get_string(STRING_DATE_SEPARATOR));
     lv_obj_set_style_text_font(date_sep1, &montserrat_pt_14, 0);
     lv_obj_set_style_text_color(date_sep1, lv_color_black(), LV_PART_MAIN);
     lv_obj_align(date_sep1, LV_ALIGN_CENTER, -40, 0);
@@ -180,7 +180,7 @@ void clock_settings_screen_load(void) {
     lv_obj_align(month_roller, LV_ALIGN_CENTER, 0, 0);
     
     lv_obj_t *date_sep2 = lv_label_create(date_container);
-    lv_label_set_text(date_sep2, "/");
+    lv_label_set_text(date_sep2, get_string(STRING_DATE_SEPARATOR));
     lv_obj_set_style_text_font(date_sep2, &montserrat_pt_14, 0);
     lv_obj_set_style_text_color(date_sep2, lv_color_black(), LV_PART_MAIN);
     lv_obj_align(date_sep2, LV_ALIGN_CENTER, 40, 0);

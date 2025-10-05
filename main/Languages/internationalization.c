@@ -50,7 +50,18 @@ static const char* strings_en[] = {
     "SampleID,Measurement,Time",
     "Portuguese",
     "English",
-    "Spanish"
+    "Spanish",
+    "Sun",
+    "Mon",
+    "Tue",
+    "Wed",
+    "Thu",
+    "Fri",
+    "Sat",
+    "Zeroing... (%d/%d)",
+    "Measuring... (%d/%d)",
+    ":",
+    "/"
 };
 
 static const char* strings_es[] = {
@@ -92,7 +103,18 @@ static const char* strings_es[] = {
     "IDMuestra,Medicion,Tiempo",
     "Portugués",
     "Inglés",
-    "Español"
+    "Español",
+    "Dom",
+    "Lun",
+    "Mar",
+    "Mié",
+    "Jue",
+    "Vie",
+    "Sáb",
+    "Calibrando... (%d/%d)",
+    "Midiendo... (%d/%d)",
+    ":",
+    "/"
 };
 
 // Adicionada a lista de strings para Português (BR)
@@ -135,7 +157,18 @@ static const char* strings_pt_br[] = {
     "ID_Amostra,Medicao,Hora",
     "Português",
     "Inglês",
-    "Espanhol"
+    "Espanhol",
+    "Dom",
+    "Seg",
+    "Ter",
+    "Qua",
+    "Qui",
+    "Sex",
+    "Sáb",
+    "Zerando... (%d/%d)",
+    "Medindo... (%d/%d)",
+    ":",
+    "/"
 };
 
 void save_language_to_nvs(language_t language) {
