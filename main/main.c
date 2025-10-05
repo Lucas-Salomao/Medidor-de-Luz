@@ -10,6 +10,7 @@
 #include "VEML7700.h"
 #include "Screens.h"
 #include "fluorimeter_screen.h"
+#include "internationalization.h"
 
 void Driver_Loop(void *parameter)
 {
@@ -45,6 +46,7 @@ void Driver_Init(void)
 void app_main(void)
 {
     Driver_Init();
+    initialize_language_from_nvs();
     SD_Init();
     LCD_Init();
     Audio_Init();

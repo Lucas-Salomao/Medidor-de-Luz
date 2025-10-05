@@ -1,4 +1,11 @@
 #include "internationalization.h"
+#include "nvs_flash.h"
+#include "nvs.h"
+#include "esp_log.h"
+
+static const char *NVS_TAG = "NVS";
+#define NVS_NAMESPACE "storage"
+#define LANG_KEY "language"
 
 // Defina o idioma padrão como Português do Brasil
 static language_t current_language = LANG_PT_BR; 
@@ -130,9 +137,52 @@ static const char* strings_pt_br[] = {
     "Espanhol"
 };
 
+void save_language_to_nvs(language_t language) {
+    nvs_handle_t nvs_handle;
+    esp_err_t err = nvs_open(NVS_NAMESPACE, NVS_READWRITE, &nvs_handle);
+    if (err != ESP_OK) {
+        ESP_LOGE(NVS_TAG, "Error opening NVS handle: %s", esp_err_to_name(err));
+        return;
+    }
+
+    err = nvs_set_u8(nvs_handle, LANG_KEY, (uint8_t)language);
+    if (err != ESP_OK) {
+        ESP_LOGE(NVS_TAG, "Failed to write language to NVS: %s", esp_err_to_name(err));
+    } else {
+        ESP_LOGI(NVS_TAG, "Language setting saved to NVS");
+    }
+
+    nvs_commit(nvs_handle);
+    nvs_close(nvs_handle);
+}
+
+void initialize_language_from_nvs(void) {
+    nvs_handle_t nvs_handle;
+    esp_err_t err = nvs_open(NVS_NAMESPACE, NVS_READONLY, &nvs_handle);
+    if (err != ESP_OK) {
+        ESP_LOGE(NVS_TAG, "Error opening NVS handle for reading: %s", esp_err_to_name(err));
+        set_language(LANG_PT_BR); // Default language
+        return;
+    }
+
+    uint8_t lang_u8;
+    err = nvs_get_u8(nvs_handle, LANG_KEY, &lang_u8);
+    if (err == ESP_OK) {
+        current_language = (language_t)lang_u8;
+        ESP_LOGI(NVS_TAG, "Language loaded from NVS: %d", current_language);
+    } else if (err == ESP_ERR_NVS_NOT_FOUND) {
+        ESP_LOGI(NVS_TAG, "Language not found in NVS, using default.");
+        current_language = LANG_PT_BR; // Default language
+    } else {
+        ESP_LOGE(NVS_TAG, "Error reading language from NVS: %s", esp_err_to_name(err));
+        current_language = LANG_PT_BR; // Default on error
+    }
+    nvs_close(nvs_handle);
+}
 
 void set_language(language_t language) {
     current_language = language;
+    save_language_to_nvs(language);
 }
 
 language_t get_language(void) {

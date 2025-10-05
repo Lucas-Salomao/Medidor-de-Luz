@@ -57,4 +57,8 @@ language_t get_language(void);
 const char* get_string(string_id_t id);
 const char* get_language_code(void);
 
+// Funções para persistência do idioma
+void initialize_language_from_nvs(void);
+void save_language_to_nvs(language_t language);
+
 #endif // INTERNATIONALIZATION_H
