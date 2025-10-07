@@ -213,6 +213,7 @@ static void create_id_modal(lv_obj_t *parent) {
     lv_obj_t *label = lv_label_create(id_modal_cont);
     lv_label_set_text(label, get_string(STRING_ENTER_SAMPLE_ID));
     lv_obj_align(label, LV_ALIGN_TOP_LEFT, 10, 10);
+    lv_obj_set_style_text_font(label, &montserrat_pt_12, 0);
 
     // Área de texto para o ID
     id_input_textarea = lv_textarea_create(id_modal_cont);
@@ -220,12 +221,14 @@ static void create_id_modal(lv_obj_t *parent) {
     lv_obj_align(id_input_textarea, LV_ALIGN_TOP_LEFT, 10, 35);
     lv_textarea_set_one_line(id_input_textarea, true);
     lv_textarea_set_placeholder_text(id_input_textarea, get_string(STRING_ID));
+    lv_obj_set_style_text_font(id_input_textarea, &montserrat_pt_12, 0);
 
     // Teclado
     keyboard = lv_keyboard_create(id_modal_bg); // Anexado ao fundo para posicionamento global
     lv_obj_set_size(keyboard, 240, 140);
     lv_obj_align(keyboard, LV_ALIGN_BOTTOM_MID, 0, 0);
     lv_keyboard_set_textarea(keyboard, id_input_textarea);
+    lv_obj_set_style_text_font(keyboard, &montserrat_pt_12, 0);
     lv_obj_add_event_cb(keyboard, id_kb_confirm_event_handler, LV_EVENT_READY, keyboard); // Ok/Enter
     lv_obj_add_event_cb(keyboard, id_modal_close_event_handler, LV_EVENT_CANCEL, keyboard); // Cancelar
 }
@@ -292,7 +295,8 @@ static esp_err_t perform_measurement_sampling(float *final_avg_lux, string_id_t 
     float total_avg_sum = 0.0f;
     int successful_repetitions = 0;
 
-    // gpio_set_level(LED_PIN, 1); // Acende o LED
+    gpio_set_level(LED_PIN, 1); // Acende o LED
+    vTaskDelay(pdMS_TO_TICKS(500));
 
     for (int i = 0; i < MAIN_REPETITIONS; i++) {
         // Atualiza a UI para mostrar o progresso
@@ -308,14 +312,14 @@ static esp_err_t perform_measurement_sampling(float *final_avg_lux, string_id_t 
 
         for (int j = 0; j < num_reads_per_cycle; j++) {
             float lux;
-            gpio_set_level(LED_PIN, 1); // Acende o LED
-            vTaskDelay(pdMS_TO_TICKS(SAMPLING_INTERVAL_MS/2));
+            // gpio_set_level(LED_PIN, 1); // Acende o LED
+            // vTaskDelay(pdMS_TO_TICKS(SAMPLING_INTERVAL_MS));
             if (VEML7700_Read_Lux(&lux) == ESP_OK) {
                 lux_sum_single_cycle += lux;
                 successful_reads_single_cycle++;
             }
-            gpio_set_level(LED_PIN, 0); // Apaga o LED
-            vTaskDelay(pdMS_TO_TICKS(SAMPLING_INTERVAL_MS));
+            // gpio_set_level(LED_PIN, 0); // Apaga o LED
+            // vTaskDelay(pdMS_TO_TICKS(SAMPLING_INTERVAL_MS));
         }
         
         if (successful_reads_single_cycle > 0) {
@@ -324,7 +328,7 @@ static esp_err_t perform_measurement_sampling(float *final_avg_lux, string_id_t 
         }
     }
 
-    // gpio_set_level(LED_PIN, 0); // Apaga o LED
+    gpio_set_level(LED_PIN, 0); // Apaga o LED
 
     if (successful_repetitions > 0) {
         *final_avg_lux = total_avg_sum / successful_repetitions;

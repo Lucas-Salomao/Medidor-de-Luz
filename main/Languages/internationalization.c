@@ -65,8 +65,8 @@ static const char* strings_en[] = {
 };
 
 static const char* strings_es[] = {
-    "AJUSTES DE RELOJ",
-    "AJUSTES DE WI-FI",
+    "RELOJ",
+    "WI-FI",
     "FLUORÍMETRO",
     "AJUSTES",
     "Coloque el blanco para poner a cero",
@@ -119,8 +119,8 @@ static const char* strings_es[] = {
 
 // Adicionada a lista de strings para Português (BR)
 static const char* strings_pt_br[] = {
-    "CONFIGURAÇÕES DO RELÓGIO",
-    "CONFIGURAÇÕES DE WI-FI",
+    "RELÓGIO",
+    "WI-FI",
     "FLUORÍMETRO",
     "CONFIGURAÇÕES",
     "Coloque o branco para zerar",

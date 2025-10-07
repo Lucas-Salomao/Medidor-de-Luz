@@ -130,6 +130,7 @@ void create_config_screen(lv_obj_t *parent) {
     // Language Label
     language_label = lv_label_create(parent); // Use static variable
     lv_label_set_text(language_label, get_string(STRING_LANGUAGE)); // Internationalized
+    lv_obj_set_style_text_font(language_label, &montserrat_pt_12, 0);
     lv_obj_set_style_text_color(language_label, lv_color_black(), 0);
     lv_obj_align(language_label, LV_ALIGN_CENTER, -40, 60);
 
@@ -141,6 +142,8 @@ void create_config_screen(lv_obj_t *parent) {
              get_string(STRING_LANG_ENGLISH),
              get_string(STRING_LANG_SPANISH));
     lv_dropdown_set_options(language_dropdown, lang_options);
+    lv_obj_set_style_text_font(language_dropdown, &montserrat_pt_12, LV_PART_MAIN);
+    lv_obj_set_style_text_font(language_dropdown, &montserrat_pt_12, LV_PART_ITEMS);
     lv_obj_align(language_dropdown, LV_ALIGN_CENTER, 60, 60);
     lv_obj_add_event_cb(language_dropdown, settings_language_dropdown_event_handler, LV_EVENT_VALUE_CHANGED, NULL);
 
