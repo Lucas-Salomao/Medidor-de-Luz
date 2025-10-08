@@ -24,6 +24,7 @@ static const char *TAG_MAIN_SCREEN = "FLUORIMETER_SCREEN";
 #define AUDIO_ZERO_PROMPT    "zero_prompt.mp3"
 #define AUDIO_MEASURE_PROMPT "measure_prompt.mp3"
 #define AUDIO_RESULT_PROMPT  "result_prompt.mp3"
+#define AUDIO_SAVE_SUCCESS   "save_success.mp3"
 
 // Definição dos estados da tela
 typedef enum {
@@ -268,7 +269,7 @@ static void id_kb_confirm_event_handler(lv_event_t *e) {
         const char* lang_code = get_language_code();
         char lang_dir[20];
         snprintf(lang_dir, sizeof(lang_dir), "/sdcard/%s", lang_code);
-        Play_Music(lang_dir, "save_success.mp3");
+        Play_Music(lang_dir, AUDIO_SAVE_SUCCESS);
     }
 
     // Fecha o modal e agenda o retorno ao estado inicial
@@ -296,7 +297,6 @@ static esp_err_t perform_measurement_sampling(float *final_avg_lux, string_id_t 
     int successful_repetitions = 0;
 
     gpio_set_level(LED_PIN, 1); // Acende o LED
-    vTaskDelay(pdMS_TO_TICKS(500));
 
     for (int i = 0; i < MAIN_REPETITIONS; i++) {
         // Atualiza a UI para mostrar o progresso
@@ -312,14 +312,11 @@ static esp_err_t perform_measurement_sampling(float *final_avg_lux, string_id_t 
 
         for (int j = 0; j < num_reads_per_cycle; j++) {
             float lux;
-            // gpio_set_level(LED_PIN, 1); // Acende o LED
-            // vTaskDelay(pdMS_TO_TICKS(SAMPLING_INTERVAL_MS));
             if (VEML7700_Read_Lux(&lux) == ESP_OK) {
                 lux_sum_single_cycle += lux;
                 successful_reads_single_cycle++;
             }
-            // gpio_set_level(LED_PIN, 0); // Apaga o LED
-            // vTaskDelay(pdMS_TO_TICKS(SAMPLING_INTERVAL_MS));
+            vTaskDelay(pdMS_TO_TICKS(SAMPLING_INTERVAL_MS));
         }
         
         if (successful_reads_single_cycle > 0) {
