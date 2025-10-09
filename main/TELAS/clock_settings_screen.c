@@ -123,8 +123,6 @@ void clock_settings_screen_load(void) {
                          LV_ROLLER_MODE_NORMAL);
     lv_obj_set_size(hour_roller, 60, 100);
     lv_obj_align(hour_roller, LV_ALIGN_CENTER, -40, 0);
-    lv_obj_set_style_text_font(hour_roller, &montserrat_pt_14, 0);
-    lv_obj_set_style_text_font(hour_roller, &montserrat_pt_14, LV_PART_SELECTED);
     
     lv_obj_t *time_sep = lv_label_create(time_container);
     lv_label_set_text(time_sep, get_string(STRING_TIME_SEPARATOR));
@@ -143,8 +141,6 @@ void clock_settings_screen_load(void) {
                          LV_ROLLER_MODE_NORMAL);
     lv_obj_set_size(minute_roller, 60, 100);
     lv_obj_align(minute_roller, LV_ALIGN_CENTER, 40, 0);
-    lv_obj_set_style_text_font(minute_roller, &montserrat_pt_14, LV_PART_MAIN);
-    lv_obj_set_style_text_font(minute_roller, &montserrat_pt_14, LV_PART_SELECTED);
     
     // Área para os controles de data
     date_label = lv_label_create(scr);
@@ -169,8 +165,6 @@ void clock_settings_screen_load(void) {
                          LV_ROLLER_MODE_NORMAL);
     lv_obj_set_size(day_roller, 60, 100);
     lv_obj_align(day_roller, LV_ALIGN_CENTER, -80, 0);
-    lv_obj_set_style_text_font(day_roller, &montserrat_pt_14, LV_PART_MAIN);
-    lv_obj_set_style_text_font(day_roller, &montserrat_pt_14, LV_PART_SELECTED);
     
     lv_obj_t *date_sep1 = lv_label_create(date_container);
     lv_label_set_text(date_sep1, get_string(STRING_DATE_SEPARATOR));
@@ -184,8 +178,6 @@ void clock_settings_screen_load(void) {
                          LV_ROLLER_MODE_NORMAL);
     lv_obj_set_size(month_roller, 60, 100);
     lv_obj_align(month_roller, LV_ALIGN_CENTER, 0, 0);
-    lv_obj_set_style_text_font(month_roller, &montserrat_pt_14, LV_PART_MAIN);
-    lv_obj_set_style_text_font(month_roller, &montserrat_pt_14, LV_PART_SELECTED);
     
     lv_obj_t *date_sep2 = lv_label_create(date_container);
     lv_label_set_text(date_sep2, get_string(STRING_DATE_SEPARATOR));
@@ -207,8 +199,6 @@ void clock_settings_screen_load(void) {
                          LV_ROLLER_MODE_NORMAL);
     lv_obj_set_size(year_roller, 60, 100);
     lv_obj_align(year_roller, LV_ALIGN_CENTER, 80, 0);
-    lv_obj_set_style_text_font(year_roller, &montserrat_pt_14, LV_PART_MAIN);
-    lv_obj_set_style_text_font(year_roller, &montserrat_pt_14, LV_PART_SELECTED);
     
     // Botão para salvar configurações
     // save_btn = lv_btn_create(scr);

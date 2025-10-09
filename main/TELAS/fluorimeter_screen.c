@@ -18,7 +18,7 @@ static const char *TAG_MAIN_SCREEN = "FLUORIMETER_SCREEN";
 #define LED_PIN GPIO_NUM_15
 #define MAIN_REPETITIONS 3      // Quantas vezes o ciclo de 1s de medição se repete
 #define SAMPLING_DURATION_MS 1000 // Duração de cada ciclo de medição (1 segundo)
-#define SAMPLING_INTERVAL_MS 200  // Intervalo entre as leituras dentro de um ciclo
+#define SAMPLING_INTERVAL_MS 100  // Intervalo entre as leituras dentro de um ciclo
 
 // --- Nomes dos Arquivos de Áudio ---
 #define AUDIO_ZERO_PROMPT    "zero_prompt.mp3"
