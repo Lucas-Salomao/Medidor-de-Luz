@@ -1,0 +1,5 @@
+/build
+/ota
+*.lock
+settings.json
+.vscode/
