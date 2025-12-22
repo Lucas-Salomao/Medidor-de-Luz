@@ -124,15 +124,12 @@ void reinit_ui_on_language_change(void) {
 
 void splash_timer_callback(lv_timer_t *timer) {
     ESP_LOGI(TAG, "Carregando tela principal após splash");
-    lv_scr_load_anim(main_screen, LV_SCR_LOAD_ANIM_FADE_ON, 500, 0, false);
     
-    // Libera a splash_screen da memória (nunca mais será usada)
-    // Economia de ~3-5KB de RAM
-    if (splash_screen) {
-        lv_obj_del(splash_screen);
-        splash_screen = NULL;
-        ESP_LOGI(TAG, "splash_screen liberada da memória");
-    }
+    // O último parâmetro (true) faz o LVGL deletar a splash_screen automaticamente
+    // APÓS a animação terminar, evitando crash por deletar tela ativa
+    lv_scr_load_anim(main_screen, LV_SCR_LOAD_ANIM_FADE_ON, 500, 0, true);
+    splash_screen = NULL;  // Marca como NULL pois será deletada automaticamente
+    ESP_LOGI(TAG, "splash_screen será liberada após animação");
     
     // Toca o primeiro áudio aqui, após a tela principal ser carregada
     char audio_dir[64];
