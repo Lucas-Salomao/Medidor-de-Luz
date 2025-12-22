@@ -66,7 +66,7 @@ void setup_ui(void) {
 void reinit_ui_on_language_change(void) {
     ESP_LOGI(TAG, "Reinicializando a UI para mudança de idioma.");
 
-    // CRÍTICO: Limpa recursos (tasks e timers) do fluorimeter antes de deletar as telas
+    // CRÍTICO: Limpa recursos (tasks e timers) do fluorimeter antes de recriar as telas
     cleanup_fluorimeter_resources();
 
     // Deleta telas auxiliares se existirem (forçará recriação com novo idioma ao navegar)
@@ -85,27 +85,19 @@ void reinit_ui_on_language_change(void) {
         splash_timer = NULL;
     }
 
-    // Destrói as telas antigas se elas existirem
-    if (main_screen) {
-        lv_obj_del(main_screen);
-        main_screen = NULL;
-    }
-    if (config_screen) {
-        lv_obj_del(config_screen);
-        config_screen = NULL;
-    }
-    if (splash_screen) {
-        lv_obj_del(splash_screen);
-        splash_screen = NULL;
-    }
+    // Guarda referências das telas antigas para deletar DEPOIS
+    lv_obj_t *old_main_screen = main_screen;
+    lv_obj_t *old_config_screen = config_screen;
 
-
-    // Recria as telas principais
+    // Recria as telas principais PRIMEIRO (antes de deletar as antigas)
     main_screen = lv_obj_create(NULL);
     config_screen = lv_obj_create(NULL);
 
     if (main_screen == NULL || config_screen == NULL) {
         ESP_LOGE(TAG, "Falha ao recriar telas após mudança de idioma");
+        // Restaura ponteiros antigos em caso de falha
+        main_screen = old_main_screen;
+        config_screen = old_config_screen;
         return;
     }
 
@@ -117,8 +109,24 @@ void reinit_ui_on_language_change(void) {
     create_main_screen(main_screen);
     create_config_screen(config_screen);
 
-    // Carrega a tela de configurações, que foi de onde a mudança foi acionada
+    // Carrega a nova tela de configurações com auto_del=false (não deletar anterior automaticamente)
+    // Deletamos manualmente as telas antigas DEPOIS da transição
     lv_scr_load(config_screen);
+    
+    // Agora é seguro deletar as telas antigas (a nova já está carregada)
+    if (old_main_screen) {
+        lv_obj_del(old_main_screen);
+    }
+    if (old_config_screen) {
+        lv_obj_del(old_config_screen);
+    }
+    
+    // Deleta splash screen antiga se existir
+    if (splash_screen) {
+        lv_obj_del(splash_screen);
+        splash_screen = NULL;
+    }
+    
     ESP_LOGI(TAG, "UI reinicializada com sucesso.");
 }
 
