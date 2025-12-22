@@ -55,6 +55,7 @@ static float last_measurement = 0.0f;
 static char datetime_str[50];
 
 bool is_first_load = true;
+bool skip_audio_on_reinit = false;  // Flag para pular áudio durante reinicialização da UI
 
 // --- Handles para controle de tasks e timers ---
 static TaskHandle_t datetime_task_handle = NULL;
@@ -152,7 +153,8 @@ static void update_ui_for_state(screen_state_t new_state) {
 
     lv_obj_set_style_text_color(instruction_label, lv_color_black(), 0);
 
-    bool play_audio = !is_first_load;
+    // Não toca áudio se for primeira carga OU se estiver reinicializando UI para troca de idioma
+    bool play_audio = !is_first_load && !skip_audio_on_reinit;
     char audio_dir[64];
     snprintf(audio_dir, sizeof(audio_dir), "/sdcard/%s", get_language_code());
 

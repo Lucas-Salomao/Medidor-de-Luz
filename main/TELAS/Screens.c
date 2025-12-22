@@ -105,13 +105,19 @@ void reinit_ui_on_language_change(void) {
     lv_obj_set_style_bg_color(main_screen, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(config_screen, lv_color_hex(0xFFFFFF), LV_PART_MAIN | LV_STATE_DEFAULT);
 
+    // Seta flag para evitar que update_ui_for_state() toque áudio durante a criação
+    skip_audio_on_reinit = true;
+    
     // Recria o conteúdo das telas com o novo idioma
     create_main_screen(main_screen);
     create_config_screen(config_screen);
+    
+    // Reseta a flag
+    skip_audio_on_reinit = false;
 
-    // Carrega a nova tela de configurações com auto_del=false (não deletar anterior automaticamente)
-    // Deletamos manualmente as telas antigas DEPOIS da transição
-    lv_scr_load(config_screen);
+    // Carrega a tela principal (fluorimetro) em vez de config_screen
+    // Assim o usuário vai para a home após trocar o idioma
+    lv_scr_load(main_screen);
     
     // Agora é seguro deletar as telas antigas (a nova já está carregada)
     if (old_main_screen) {
@@ -126,6 +132,11 @@ void reinit_ui_on_language_change(void) {
         lv_obj_del(splash_screen);
         splash_screen = NULL;
     }
+    
+    // Toca o áudio de zeramento DEPOIS de carregar a tela principal
+    char audio_dir[64];
+    snprintf(audio_dir, sizeof(audio_dir), "/sdcard/%s", get_language_code());
+    Play_Music(audio_dir, AUDIO_ZERO_PROMPT);
     
     ESP_LOGI(TAG, "UI reinicializada com sucesso.");
 }

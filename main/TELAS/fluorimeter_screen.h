@@ -4,6 +4,7 @@
 #define FLUXIMETER_SCREEN_H
 
 extern bool is_first_load;
+extern bool skip_audio_on_reinit;  // Flag para pular áudio durante reinicialização da UI
 
 // Função para limpar recursos do fluorimeter antes de reinicializar a UI
 void cleanup_fluorimeter_resources(void);
