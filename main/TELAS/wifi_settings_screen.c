@@ -168,14 +168,18 @@ static void connect_btn_event_handler(lv_event_t *e) {
     // Tenta conectar
     bool connected = WIFI_Connect(selected_ssid, password);
 
+    // Monta o caminho de áudio com base no idioma atual
+    char audio_dir[64];
+    snprintf(audio_dir, sizeof(audio_dir), "/sdcard/%s", get_language_code());
+
     if (connected) {
         lv_label_set_text(status_label, get_string(STRING_CONNECTED_SUCCESSFULLY));
         lv_obj_set_style_text_color(status_label, lv_color_make(0, 128, 0), LV_PART_MAIN); // Verde
-        Play_Music("/sdcard", AUDIO_WIFI_CONNECTED);
+        Play_Music(audio_dir, AUDIO_WIFI_CONNECTED);
     } else {
         lv_label_set_text(status_label, get_string(STRING_CONNECTION_FAILED));
         lv_obj_set_style_text_color(status_label, lv_color_make(255, 0, 0), LV_PART_MAIN); // Vermelho
-        Play_Music("/sdcard", AUDIO_WIFI_ERROR);
+        Play_Music(audio_dir, AUDIO_WIFI_ERROR);
     }
 }
 
