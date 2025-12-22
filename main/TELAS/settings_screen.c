@@ -74,7 +74,7 @@ void create_config_screen(lv_obj_t *parent) {
     // Cria o botão "Relógio"
     lv_obj_t *btn_clock = lv_btn_create(parent);
     lv_obj_set_size(btn_clock, 180, 45);
-    lv_obj_align(btn_clock, LV_ALIGN_TOP_MID, 0, 45);
+    lv_obj_align(btn_clock, LV_ALIGN_TOP_MID, 0, 55);
     lv_obj_add_event_cb(btn_clock, btn_clock_cb, LV_EVENT_CLICKED, NULL);
 
     lv_obj_t *label_clock = lv_label_create(btn_clock);
@@ -84,7 +84,7 @@ void create_config_screen(lv_obj_t *parent) {
     // Cria o botão "Wi-Fi"
     lv_obj_t *btn_wifi = lv_btn_create(parent);
     lv_obj_set_size(btn_wifi, 180, 45);
-    lv_obj_align(btn_wifi, LV_ALIGN_TOP_MID, 0, 95);
+    lv_obj_align(btn_wifi, LV_ALIGN_TOP_MID, 0, 105);
     lv_obj_add_event_cb(btn_wifi, btn_wifi_cb, LV_EVENT_CLICKED, NULL);
 
     lv_obj_t *label_wifi = lv_label_create(btn_wifi);
@@ -94,7 +94,7 @@ void create_config_screen(lv_obj_t *parent) {
     // Cria o botão "Verificar Atualizações"
     lv_obj_t *btn_ota = lv_btn_create(parent);
     lv_obj_set_size(btn_ota, 180, 45);
-    lv_obj_align(btn_ota, LV_ALIGN_TOP_MID, 0, 145);
+    lv_obj_align(btn_ota, LV_ALIGN_TOP_MID, 0, 155);
     lv_obj_add_event_cb(btn_ota, btn_ota_update_cb, LV_EVENT_CLICKED, NULL);
 
     lv_obj_t *label_ota = lv_label_create(btn_ota);

@@ -468,6 +468,7 @@ void create_main_screen(lv_obj_t *parent) {
     lv_obj_set_style_text_font(battery_label, &lv_font_montserrat_12, 0);
     lv_obj_set_style_text_color(battery_label, lv_color_black(), LV_PART_MAIN);
     lv_obj_align(battery_label, LV_ALIGN_TOP_LEFT, 5, 10);
+    lv_label_set_text(battery_label, LV_SYMBOL_BATTERY_FULL);
 
     // Rótulo de instruções
     instruction_label = lv_label_create(parent);
