@@ -15,6 +15,8 @@
 #include "esp_crt_bundle.h"
 #include "cJSON.h"
 #include "string.h"
+#include <time.h>
+#include <sys/time.h>
 
 #include "OTA_Manager.h"
 
@@ -66,9 +68,29 @@ esp_err_t _api_http_event_handler(esp_http_client_event_t *evt)
     return ESP_OK;
 }
 
+// Helper function to check if system time is valid
+static bool is_time_valid(void)
+{
+    time_t now;
+    struct tm timeinfo;
+    time(&now);
+    localtime_r(&now, &timeinfo);
+    // Check if year is at least 2024 (indicating time has been synchronized)
+    return (timeinfo.tm_year >= (2024 - 1900));
+}
+
 void ota_task(void *pvParameter)
 {
     ESP_LOGI(TAG, "Starting OTA Check. Current version: %s", CURRENT_FIRMWARE_VERSION);
+
+    // Verify system time is synchronized (required for TLS certificate validation)
+    if (!is_time_valid()) {
+        ESP_LOGE(TAG, "System time not synchronized! Please connect to WiFi first to sync time via NTP.");
+        ESP_LOGE(TAG, "OTA check aborted - TLS certificate verification requires correct system time.");
+        vTaskDelete(NULL);
+        return;
+    }
+    ESP_LOGI(TAG, "System time is valid, proceeding with OTA check...");
 
     // 1. Fetch the latest release data from GitHub API
     // ---------------------------------------------------
@@ -84,6 +106,7 @@ void ota_task(void *pvParameter)
         .crt_bundle_attach = esp_crt_bundle_attach, // For HTTPS
         .user_agent = "esp32-ota-checker",
         .timeout_ms = 10000,
+        .skip_cert_common_name_check = true, // Skip strict certificate CN validation
     };
 
     esp_http_client_handle_t client = esp_http_client_init(&api_config);
@@ -149,6 +172,7 @@ void ota_task(void *pvParameter)
         .url = firmware_url,
         .crt_bundle_attach = esp_crt_bundle_attach, // For HTTPS
         .timeout_ms = 10000,
+        .skip_cert_common_name_check = true, // Skip strict certificate CN validation
     };
 
     esp_https_ota_config_t ota_config = {
