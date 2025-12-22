@@ -206,7 +206,7 @@ static void create_id_modal(lv_obj_t *parent) {
 
     // Área de texto para o ID
     id_input_textarea = lv_textarea_create(id_modal_cont);
-    lv_obj_set_size(id_input_textarea, 200, 40);
+    lv_obj_set_size(id_input_textarea, 180, 40);
     lv_obj_align(id_input_textarea, LV_ALIGN_TOP_LEFT, 10, 35);
     lv_textarea_set_one_line(id_input_textarea, true);
     lv_textarea_set_placeholder_text(id_input_textarea, get_string(STRING_ID));
