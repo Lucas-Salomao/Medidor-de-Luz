@@ -10,6 +10,7 @@
 #include "VEML7700.h"
 #include "Screens.h"
 #include "fluorimeter_screen.h"
+#include "Languages/internationalization.h"
 
 void Driver_Loop(void *parameter)
 {
@@ -51,6 +52,9 @@ void app_main(void)
     // Play_Music("/sdcard","AAA.mp3");
     LVGL_Init();   // returns the screen object
 
+    // Carrega o idioma salvo no NVS antes de criar a UI
+    initialize_language_from_nvs();
+    
     setup_ui();
 
     // Cria a tarefa para leitura do sensor
